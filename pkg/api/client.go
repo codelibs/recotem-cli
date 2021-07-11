@@ -1,13 +1,19 @@
 package api
 
-import "recotem.org/cli/recotem/pkg/cfg"
+import (
+	"context"
+
+	"recotem.org/cli/recotem/pkg/cfg"
+)
 
 type Client struct {
-	Url string
+	Context context.Context
+	Url     string
 }
 
-func NewClient(config cfg.RecotemConfig) Client {
+func NewClient(context context.Context, config cfg.RecotemConfig) Client {
 	client := Client{}
-	client.Url=config.Url
+	client.Context = context
+	client.Url = config.Url
 	return client
 }

@@ -30,7 +30,7 @@ func main() {
 					if err != nil {
 						return err
 					}
-					client:=api.NewClient(config)
+					client := api.NewClient(c.Context, config)
 					token, err := client.GetToken(username, password)
 					if err != nil {
 						return err
@@ -40,6 +40,7 @@ func main() {
 					if err != nil {
 						return err
 					}
+					fmt.Println("Updated your token.")
 					return nil
 				},
 			},

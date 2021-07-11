@@ -1,11 +1,7 @@
 package api
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"net/http"
+	"recotem.org/cli/recotem/pkg/openapi"
 )
 
 type TokenRequestBody struct {
@@ -25,39 +21,19 @@ func NewTokenRequestBody(username string, password string) (body TokenRequestBod
 }
 
 func (c Client) GetToken(username string, password string) (string, error) {
-	requestBody := NewTokenRequestBody(username, password)
-	jsonRequestBody, err := json.Marshal(requestBody)
+	client, err := openapi.NewClientWithResponses(c.Url)
 	if err != nil {
 		return "", err
 	}
 
-	url := c.Url + "/api/token/"
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonRequestBody))
-	if err != nil {
-		return "", err
-	}
-	req.Header.Set("Content-Type", "application/json")
+	req := openapi.TokenCreateJSONRequestBody{}
+	req.Username = username
+	req.Password = password
 
-	client := new(http.Client)
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("Could not access Recotem server. HTTP status: %d", resp.StatusCode)
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
+	resp, err := client.TokenCreateWithResponse(c.Context, req)
 	if err != nil {
 		return "", err
 	}
 
-	responseBody := TokenResponse{}
-	err = json.Unmarshal([]byte(body), &responseBody)
-	if err != nil {
-		return "", err
-	}
-
-	return responseBody.Token, nil
+	return resp.JSON200.Token, nil
 }
