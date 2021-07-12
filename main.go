@@ -19,13 +19,23 @@ func main() {
 				Name:    "login",
 				Aliases: []string{},
 				Usage:   "get an gaccess token",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:    "username",
+						Aliases: []string{"u"},
+						Usage:   "Username",
+					},
+					&cli.StringFlag{
+						Name:    "password",
+						Aliases: []string{"p"},
+						Usage:   "Password",
+					},
+				},
 				Action: func(c *cli.Context) error {
-					username, password, err := utils.Credentials()
+					username, password, err := utils.Credentials(c.String("username"), c.String("password"))
 					if err != nil {
 						return err
 					}
-					// username := "admin"
-					// password := "very_bad_password"
 					config, err := cfg.LoadRecotemConfig()
 					if err != nil {
 						return err
