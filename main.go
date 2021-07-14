@@ -156,16 +156,21 @@ func main() {
 								return err
 							}
 							client := api.NewClient(c.Context, config)
-							var id int
+							var id *int = nil
 							idStr := c.String("id")
 							if len(idStr) > 0 {
-								id, err = strconv.Atoi(idStr)
+								x, err := strconv.Atoi(idStr)
 								if err != nil {
 									return err
 								}
+								id = &x
 							}
-							name := c.String("name")
-							projects, err := client.GetProject(&id, &name)
+							var name *string = nil
+							nameStr := c.String("name")
+							if len(nameStr) > 0 {
+								name = &nameStr
+							}
+							projects, err := client.GetProject(id, name)
 							if err != nil {
 								return err
 							}
