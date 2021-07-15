@@ -50,18 +50,16 @@ func (c Client) DeleteProject(id int) error {
 	return fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
 }
 
-func (c Client) GetProject(id *int, name *string) (*[]openapi.Project, error) {
+func (c Client) GetProjects(id *int, name *string) (*[]openapi.Project, error) {
 	client, err := c.newApiClient()
 	if err != nil {
 		return nil, err
 	}
 
 	var req openapi.ProjectListParams
-	if id != nil {
+	if id != nil || name != nil {
 		req = openapi.ProjectListParams{}
 		req.Id = id
-	} else if name != nil {
-		req = openapi.ProjectListParams{}
 		req.Name = name
 	}
 	resp, err := client.ProjectListWithResponse(c.Context, &req)

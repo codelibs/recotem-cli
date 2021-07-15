@@ -136,8 +136,8 @@ func main() {
 						},
 					},
 					{
-						Name:  "get",
-						Usage: "Get projects",
+						Name:  "list",
+						Usage: "get projects",
 						Flags: []cli.Flag{
 							&cli.StringFlag{
 								Name:    "id",
@@ -156,26 +156,14 @@ func main() {
 								return err
 							}
 							client := api.NewClient(c.Context, config)
-							var id *int = nil
-							idStr := c.String("id")
-							if len(idStr) > 0 {
-								x, err := strconv.Atoi(idStr)
-								if err != nil {
-									return err
-								}
-								id = &x
-							}
-							var name *string = nil
-							nameStr := c.String("name")
-							if len(nameStr) > 0 {
-								name = &nameStr
-							}
-							projects, err := client.GetProject(id, name)
+							projects, err := client.GetProjects(
+								utils.NilOrInt(c.String("id")),
+								utils.NilOrString(c.String("name")))
 							if err != nil {
 								return err
 							}
-							for _, p := range *projects {
-								fmt.Println(p.Id, p.Name)
+							for _, x := range *projects {
+								fmt.Println(x.Id, x.Name)
 							}
 							return nil
 						},
@@ -222,11 +210,110 @@ func main() {
 							return nil
 						},
 					},
+				},
+			},
+			{
+				Name:    "split-config",
+				Aliases: []string{"sc"},
+				Usage:   "options for split config",
+				Subcommands: []*cli.Command{
 					{
-						Name:  "remove",
-						Usage: "remove an existing template",
+						Name:  "create",
+						Usage: "create a new split config",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:    "name",
+								Aliases: []string{"n"},
+								Usage:   "Name",
+							},
+							&cli.StringFlag{
+								Name:    "scheme",
+								Aliases: []string{"s"},
+								Usage:   "Scheme (RG|TG|TU)",
+							},
+							&cli.StringFlag{
+								Name:    "heldout-ratio",
+								Aliases: []string{"hr"},
+								Usage:   "Heldout ratio",
+							},
+							&cli.StringFlag{
+								Name:    "n-heldout",
+								Aliases: []string{"nh"},
+								Usage:   "The number of heldout",
+							},
+							&cli.StringFlag{
+								Name:    "test-user-ratio",
+								Aliases: []string{"tur"},
+								Usage:   "Test user ratio",
+							},
+							&cli.StringFlag{
+								Name:    "n-test-users",
+								Aliases: []string{"ntu"},
+								Usage:   "The number of test users",
+							},
+							&cli.StringFlag{
+								Name:    "random-seed",
+								Aliases: []string{"rs"},
+								Usage:   "Random seed",
+							},
+						},
 						Action: func(c *cli.Context) error {
-							fmt.Println("removed task template: ", c.Args().First())
+							config, err := cfg.LoadRecotemConfig()
+							if err != nil {
+								return err
+							}
+							client := api.NewClient(c.Context, config)
+							splitConfig, err := client.CreateSplitConfig(
+								utils.NilOrString(c.String("name")),
+								utils.NilOrScheme(c.String("scheme")),
+								utils.NilOrFloat32(c.String("heldout-ratio")),
+								utils.NilOrInt(c.String("n-heldout")),
+								utils.NilOrFloat32(c.String("test-user-ratio")),
+								utils.NilOrInt(c.String("n-test-users")),
+								utils.NilOrInt(c.String("random-seed")))
+							if err != nil {
+								return err
+							}
+							fmt.Println("Created Split Config ID: ", splitConfig.Id)
+							return nil
+						},
+					},
+					{
+						Name:  "list",
+						Usage: "get split configs",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:    "id",
+								Aliases: []string{"i"},
+								Usage:   "Split config ID",
+							},
+							&cli.StringFlag{
+								Name:    "name",
+								Aliases: []string{"n"},
+								Usage:   "Name",
+							},
+							&cli.StringFlag{
+								Name:    "unnamed",
+								Aliases: []string{"u"},
+								Usage:   "Unnamed",
+							},
+						},
+						Action: func(c *cli.Context) error {
+							config, err := cfg.LoadRecotemConfig()
+							if err != nil {
+								return err
+							}
+							client := api.NewClient(c.Context, config)
+							splitConfigs, err := client.GetSplitConfigs(
+								utils.NilOrInt(c.String("id")),
+								utils.NilOrString(c.String("name")),
+								utils.NilOrBool(c.String("unnamed")))
+							if err != nil {
+								return err
+							}
+							for _, x := range *splitConfigs {
+								fmt.Println(x.Id, x.Name)
+							}
 							return nil
 						},
 					},
