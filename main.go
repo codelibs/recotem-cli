@@ -183,15 +183,42 @@ func main() {
 				},
 			},
 			{
-				Name:    "template",
-				Aliases: []string{"t"},
-				Usage:   "options for task templates",
+				Name:    "training-data",
+				Aliases: []string{"td"},
+				Usage:   "options for training data",
 				Subcommands: []*cli.Command{
 					{
-						Name:  "add",
-						Usage: "add a new template",
+						Name:  "upload",
+						Usage: "upload a new training data",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:     "project-id",
+								Aliases:  []string{"p"},
+								Usage:    "Project ID",
+								Required: true,
+							},
+							&cli.StringFlag{
+								Name:     "file",
+								Aliases:  []string{"f"},
+								Usage:    "File for a training data",
+								Required: true,
+							},
+						},
 						Action: func(c *cli.Context) error {
-							fmt.Println("new task template: ", c.Args().First())
+							config, err := cfg.LoadRecotemConfig()
+							if err != nil {
+								return err
+							}
+							client := api.NewClient(c.Context, config)
+							id, err := strconv.Atoi(c.String("project-id"))
+							if err != nil {
+								return err
+							}
+							data, err := client.UploadTrainingData(id, c.String("file"))
+							if err != nil {
+								return err
+							}
+							fmt.Println("Created Data ID: ", data.Id)
 							return nil
 						},
 					},
