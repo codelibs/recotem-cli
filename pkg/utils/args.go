@@ -55,3 +55,24 @@ func NilOrScheme(s string) *openapi.SchemeEnum {
 	}
 	return nil
 }
+
+func NilOrTargetMetric(s string) *openapi.TargetMetricEnum {
+	scheme := NilOrString(s)
+	if scheme == nil {
+		return nil
+	}
+	if *scheme == "hit" {
+		x := openapi.TargetMetricEnumHit
+		return &x
+	} else if *scheme == "map" {
+		x := openapi.TargetMetricEnumMap
+		return &x
+	} else if *scheme == "recall" {
+		x := openapi.TargetMetricEnumRecall
+		return &x
+	} else if *scheme == "ndcg" {
+		x := openapi.TargetMetricEnumNdcg
+		return &x
+	}
+	return nil
+}
