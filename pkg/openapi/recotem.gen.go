@@ -393,10 +393,7 @@ type TaskResult struct {
 	DateDone time.Time `json:"date_done"`
 
 	// Current state of the task being run
-	Status *struct {
-		// Embedded struct due to allOf(#/components/schemas/StatusEnum)
-		StatusEnum `yaml:",inline"`
-	} `json:"status,omitempty"`
+	Status *StatusEnum `json:"status,omitempty"`
 
 	// Celery ID for the Task that was run
 	TaskId string `json:"task_id"`
