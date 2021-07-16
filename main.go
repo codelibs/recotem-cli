@@ -210,6 +210,51 @@ func main() {
 							return nil
 						},
 					},
+					{
+						Name:  "list",
+						Usage: "get training data",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:    "id",
+								Aliases: []string{"i"},
+								Usage:   "Training data ID",
+							},
+							&cli.StringFlag{
+								Name:    "page",
+								Aliases: []string{"p"},
+								Usage:   "Page",
+							},
+							&cli.StringFlag{
+								Name:    "page-size",
+								Aliases: []string{"ps"},
+								Usage:   "Page size",
+							},
+							&cli.StringFlag{
+								Name:    "project",
+								Aliases: []string{"pj"},
+								Usage:   "Project",
+							},
+						},
+						Action: func(c *cli.Context) error {
+							config, err := cfg.LoadRecotemConfig()
+							if err != nil {
+								return err
+							}
+							client := api.NewClient(c.Context, config)
+							tdList, err := client.GetTrainingData(
+								utils.NilOrInt(c.String("id")),
+								utils.NilOrInt(c.String("page")),
+								utils.NilOrInt(c.String("page-size")),
+								utils.NilOrInt(c.String("project")))
+							if err != nil {
+								return err
+							}
+							for _, x := range *tdList.Results {
+								fmt.Println(x.Id, *x.Basename, x.Filesize, x.InsDatetime)
+							}
+							return nil
+						},
+					},
 				},
 			},
 			{

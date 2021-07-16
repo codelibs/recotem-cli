@@ -57,3 +57,29 @@ func (c Client) UploadTrainingData(projectId int, uploadPath string) (*openapi.T
 
 	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
 }
+
+func (c Client) GetTrainingData(id *int, page *int, pageSize *int, project *int) (*openapi.PaginatedTrainingDataList, error) {
+	client, err := c.newApiClient()
+	if err != nil {
+		return nil, err
+	}
+
+	var req openapi.TrainingDataListParams
+	if id != nil || page != nil || pageSize != nil || project != nil {
+		req = openapi.TrainingDataListParams{}
+		req.Id = id
+		req.Page = page
+		req.PageSize = pageSize
+		req.Project = project
+	}
+	resp, err := client.TrainingDataListWithResponse(c.Context, &req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.JSON200 != nil {
+		return resp.JSON200, nil
+	}
+
+	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+}
