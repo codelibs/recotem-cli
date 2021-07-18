@@ -62,8 +62,8 @@ func projectCreateCommand() *cli.Command {
 			name := c.String("name")
 			userColumn := c.String("user-column")
 			itemColumn := c.String("item-column")
-			timeColumn := c.String("time-column")
-			project, err := client.CreateProject(name, userColumn, itemColumn, &timeColumn)
+			project, err := client.CreateProject(name, userColumn, itemColumn,
+				utils.NilOrString("time-column"))
 			if err != nil {
 				return err
 			}

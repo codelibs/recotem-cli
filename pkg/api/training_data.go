@@ -66,11 +66,12 @@ func (c Client) GetTrainingData(id *int, page *int, pageSize *int, project *int)
 
 	var req openapi.TrainingDataListParams
 	if id != nil || page != nil || pageSize != nil || project != nil {
-		req = openapi.TrainingDataListParams{}
-		req.Id = id
-		req.Page = page
-		req.PageSize = pageSize
-		req.Project = project
+		req = openapi.TrainingDataListParams{
+			Id:       id,
+			Page:     page,
+			PageSize: pageSize,
+			Project:  project,
+		}
 	}
 	resp, err := client.TrainingDataListWithResponse(c.Context, &req)
 	if err != nil {

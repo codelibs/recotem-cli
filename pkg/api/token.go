@@ -16,9 +16,10 @@ type TokenResponse struct {
 }
 
 func NewTokenRequestBody(username string, password string) (body TokenRequestBody) {
-	body = TokenRequestBody{}
-	body.Username = username
-	body.Password = password
+	body = TokenRequestBody{
+		Username: username,
+		Password: password,
+	}
 	return
 }
 
@@ -28,9 +29,10 @@ func (c Client) GetToken(username string, password string) (*openapi.AuthToken, 
 		return nil, err
 	}
 
-	req := openapi.TokenCreateJSONRequestBody{}
-	req.Username = username
-	req.Password = password
+	req := openapi.TokenCreateJSONRequestBody{
+		Username: username,
+		Password: password,
+	}
 
 	resp, err := client.TokenCreateWithResponse(c.Context, req)
 	if err != nil {

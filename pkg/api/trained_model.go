@@ -14,11 +14,12 @@ func (c Client) CreateTrainedModel(configuration int, dataLoc int, file *string,
 		return nil, err
 	}
 
-	req := openapi.TrainedModelCreateJSONRequestBody{}
-	req.Configuration = configuration
-	req.DataLoc = dataLoc
-	req.File = file
-	req.IrspackVersion = irspackVersion
+	req := openapi.TrainedModelCreateJSONRequestBody{
+		Configuration:  configuration,
+		DataLoc:        dataLoc,
+		File:           file,
+		IrspackVersion: irspackVersion,
+	}
 	resp, err := client.TrainedModelCreateWithResponse(c.Context, req)
 	if err != nil {
 		return nil, err
@@ -40,12 +41,13 @@ func (c Client) GetTrainedModels(dataLoc *int, dataLocProject *int, id *int, pag
 
 	var req openapi.TrainedModelListParams
 	if dataLoc != nil || dataLocProject != nil || id != nil || page != nil || pageSize != nil {
-		req = openapi.TrainedModelListParams{}
-		req.DataLoc = dataLoc
-		req.DataLocProject = dataLocProject
-		req.Id = id
-		req.Page = page
-		req.PageSize = pageSize
+		req = openapi.TrainedModelListParams{
+			DataLoc:        dataLoc,
+			DataLocProject: dataLocProject,
+			Id:             id,
+			Page:           page,
+			PageSize:       pageSize,
+		}
 	}
 	resp, err := client.TrainedModelListWithResponse(c.Context, &req)
 	if err != nil {
