@@ -14,6 +14,7 @@ func main() {
 		Commands: []*cli.Command{
 			cmd.EvaluationConfigCommand(),
 			cmd.LoginCommand(),
+			cmd.ModelConfigurationCommand(),
 			cmd.ParameterTuningJobCommand(),
 			cmd.ProjectCommand(),
 			cmd.SplitConfigCommand(),
