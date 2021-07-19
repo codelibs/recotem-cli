@@ -11,23 +11,23 @@ import (
 	"recotem.org/cli/recotem/pkg/utils"
 )
 
-func TrainingDataCommand() *cli.Command {
+func ItemMetaDataCommand() *cli.Command {
 	cmd := cli.Command{
-		Name:    "training-data",
-		Aliases: []string{"td"},
-		Usage:   "options for training data",
+		Name:    "item-meta-data",
+		Aliases: []string{"imd"},
+		Usage:   "options for item meta data",
 		Subcommands: []*cli.Command{
-			trainingDataListCommand(),
-			trainingDataUploadCommand(),
+			itemMetaDataListCommand(),
+			itemMetaDataUploadCommand(),
 		},
 	}
 	return &cmd
 }
 
-func trainingDataUploadCommand() *cli.Command {
+func itemMetaDataUploadCommand() *cli.Command {
 	cmd := cli.Command{
 		Name:  "upload",
-		Usage: "upload a new training data",
+		Usage: "upload a new item meta data",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "project",
@@ -38,7 +38,7 @@ func trainingDataUploadCommand() *cli.Command {
 			&cli.StringFlag{
 				Name:     "file",
 				Aliases:  []string{"f"},
-				Usage:    "File for a training data",
+				Usage:    "File for a item-meta data",
 				Required: true,
 			},
 		},
@@ -52,21 +52,21 @@ func trainingDataUploadCommand() *cli.Command {
 			if err != nil {
 				return err
 			}
-			trainingData, err := client.UploadTrainingData(id, c.String("file"))
+			itemMetaData, err := client.UploadItemMetaData(id, c.String("file"))
 			if err != nil {
 				return err
 			}
-			printTrainingData(*trainingData)
+			printItemMetaData(*itemMetaData)
 			return nil
 		},
 	}
 	return &cmd
 }
 
-func trainingDataListCommand() *cli.Command {
+func itemMetaDataListCommand() *cli.Command {
 	cmd := cli.Command{
 		Name:  "list",
-		Usage: "get training data",
+		Usage: "get item-meta data",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "id",
@@ -95,7 +95,7 @@ func trainingDataListCommand() *cli.Command {
 				return err
 			}
 			client := api.NewClient(c.Context, config)
-			tdList, err := client.GetTrainingData(
+			tdList, err := client.GetItemMetaData(
 				utils.NilOrInt(c.String("id")),
 				utils.NilOrInt(c.String("page")),
 				utils.NilOrInt(c.String("page-size")),
@@ -104,7 +104,7 @@ func trainingDataListCommand() *cli.Command {
 				return err
 			}
 			for _, x := range *tdList.Results {
-				printTrainingData(x)
+				printItemMetaData(x)
 			}
 			return nil
 		},
@@ -112,6 +112,6 @@ func trainingDataListCommand() *cli.Command {
 	return &cmd
 }
 
-func printTrainingData(x openapi.TrainingData) {
+func printItemMetaData(x openapi.ItemMetaData) {
 	fmt.Println(x.Id, *x.Basename, x.Filesize, x.InsDatetime)
 }

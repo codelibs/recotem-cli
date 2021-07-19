@@ -13,6 +13,7 @@ func main() {
 	app := &cli.App{
 		Commands: []*cli.Command{
 			cmd.EvaluationConfigCommand(),
+			cmd.ItemMetaDataCommand(),
 			cmd.LoginCommand(),
 			cmd.ModelConfigurationCommand(),
 			cmd.ParameterTuningJobCommand(),
