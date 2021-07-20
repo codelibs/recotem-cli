@@ -7,6 +7,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"recotem.org/cli/recotem/pkg/api"
 	"recotem.org/cli/recotem/pkg/cfg"
+	"recotem.org/cli/recotem/pkg/openapi"
 	"recotem.org/cli/recotem/pkg/utils"
 )
 
@@ -63,11 +64,11 @@ func projectCreateCommand() *cli.Command {
 			userColumn := c.String("user-column")
 			itemColumn := c.String("item-column")
 			project, err := client.CreateProject(name, userColumn, itemColumn,
-				utils.NilOrString("time-column"))
+				utils.NilOrString(c.String("time-column")))
 			if err != nil {
 				return err
 			}
-			fmt.Println("Created Project ID: ", project.Id)
+			printProject(*project)
 			return nil
 		},
 	}
@@ -100,7 +101,7 @@ func projectDeleteCommand() *cli.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println("Deleted Project ID: ", id)
+			fmt.Println("Deleted:", id)
 			return nil
 		},
 	}
@@ -136,10 +137,18 @@ func projectListCommand() *cli.Command {
 				return err
 			}
 			for _, x := range *projects {
-				fmt.Println(x.Id, x.Name)
+				printProject(x)
 			}
 			return nil
 		},
 	}
 	return &cmd
+}
+
+func printProject(x openapi.Project) {
+	fmt.Println(x.Id,
+		x.Name,
+		x.UserColumn,
+		x.ItemColumn,
+		utils.Atoa(x.TimeColumn))
 }

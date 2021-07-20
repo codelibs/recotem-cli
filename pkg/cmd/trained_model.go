@@ -7,6 +7,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"recotem.org/cli/recotem/pkg/api"
 	"recotem.org/cli/recotem/pkg/cfg"
+	"recotem.org/cli/recotem/pkg/openapi"
 	"recotem.org/cli/recotem/pkg/utils"
 )
 
@@ -74,7 +75,7 @@ func trainedModelCreateCommand() *cli.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println("Created Trained Model ID: ", trainedModel.Id)
+			printTrainedModel(*trainedModel)
 			return nil
 		},
 	}
@@ -129,13 +130,7 @@ func trainedModelListCommand() *cli.Command {
 				return err
 			}
 			for _, x := range *tmList.Results {
-				size := len(x.TaskLinks)
-				if size > 0 {
-					task := x.TaskLinks[size-1].Task
-					fmt.Println(x.Id, x.InsDatetime, *task.Status)
-				} else {
-					fmt.Println(x.Id)
-				}
+				printTrainedModel(x)
 			}
 			return nil
 		},
@@ -181,4 +176,22 @@ func trainedModelDownloadCommand() *cli.Command {
 		},
 	}
 	return &cmd
+}
+
+func printTrainedModel(x openapi.TrainedModel) {
+	size := len(x.TaskLinks)
+	if size > 0 {
+		task := x.TaskLinks[size-1].Task
+		var status string
+		if task.Status != nil {
+			status = string(*task.Status)
+		} else {
+			status = utils.NoValue
+		}
+		fmt.Println(x.Id,
+			utils.FormatTime(x.InsDatetime),
+			status)
+	} else {
+		fmt.Println(x.Id)
+	}
 }

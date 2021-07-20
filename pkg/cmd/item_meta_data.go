@@ -113,5 +113,8 @@ func itemMetaDataListCommand() *cli.Command {
 }
 
 func printItemMetaData(x openapi.ItemMetaData) {
-	fmt.Println(x.Id, *x.Basename, x.Filesize, x.InsDatetime)
+	fmt.Println(x.Id,
+		utils.Atoa(x.Basename),
+		x.Filesize,
+		utils.FormatTime(x.InsDatetime))
 }

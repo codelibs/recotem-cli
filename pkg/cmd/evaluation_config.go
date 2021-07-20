@@ -6,6 +6,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"recotem.org/cli/recotem/pkg/api"
 	"recotem.org/cli/recotem/pkg/cfg"
+	"recotem.org/cli/recotem/pkg/openapi"
 	"recotem.org/cli/recotem/pkg/utils"
 )
 
@@ -56,7 +57,7 @@ func evaluationConfigCreateCommand() *cli.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println("Created Evaluation Config ID: ", evaluationConfig.Id)
+			printEvaluationConfig(*evaluationConfig)
 			return nil
 		},
 	}
@@ -90,18 +91,32 @@ func evaluationConfigListCommand() *cli.Command {
 				return err
 			}
 			client := api.NewClient(c.Context, config)
-			splitConfigs, err := client.GetEvaluationConfigs(
+			evaluationConfigs, err := client.GetEvaluationConfigs(
 				utils.NilOrInt(c.String("id")),
 				utils.NilOrString(c.String("name")),
 				utils.NilOrBool(c.String("unnamed")))
 			if err != nil {
 				return err
 			}
-			for _, x := range *splitConfigs {
-				fmt.Println(x.Id, x.Name)
+			for _, x := range *evaluationConfigs {
+				printEvaluationConfig(x)
 			}
 			return nil
 		},
 	}
 	return &cmd
+}
+
+func printEvaluationConfig(x openapi.EvaluationConfig) {
+	var targetMetric string
+	if x.TargetMetric != nil {
+		targetMetric = string(*x.TargetMetric)
+	} else {
+		targetMetric = utils.NoValue
+	}
+	fmt.Println(
+		x.Id,
+		utils.Itoa(x.Cutoff),
+		targetMetric,
+		utils.FormatName(utils.Atoa(x.Name)))
 }

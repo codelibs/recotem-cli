@@ -113,5 +113,9 @@ func trainingDataListCommand() *cli.Command {
 }
 
 func printTrainingData(x openapi.TrainingData) {
-	fmt.Println(x.Id, *x.Basename, x.Filesize, x.InsDatetime)
+	fmt.Println(x.Id,
+		x.Project,
+		utils.Atoa(x.Basename),
+		x.Filesize,
+		utils.FormatTime(x.InsDatetime))
 }

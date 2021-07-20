@@ -6,6 +6,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"recotem.org/cli/recotem/pkg/api"
 	"recotem.org/cli/recotem/pkg/cfg"
+	"recotem.org/cli/recotem/pkg/openapi"
 	"recotem.org/cli/recotem/pkg/utils"
 )
 
@@ -80,7 +81,7 @@ func splitConfigCreateCommand() *cli.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println("Created Split Config ID: ", splitConfig.Id)
+			printSplitConfig(*splitConfig)
 			return nil
 		},
 	}
@@ -122,10 +123,17 @@ func splitConfigListCommand() *cli.Command {
 				return err
 			}
 			for _, x := range *splitConfigs {
-				fmt.Println(x.Id, x.Name)
+				printSplitConfig(x)
 			}
 			return nil
 		},
 	}
 	return &cmd
+}
+
+func printSplitConfig(x openapi.SplitConfig) {
+	fmt.Println(x.Id,
+		utils.Ftoa(x.HeldoutRatio),
+		utils.Ftoa(x.TestUserRatio),
+		utils.Itoa(x.RandomSeed))
 }

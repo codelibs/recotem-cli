@@ -7,6 +7,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"recotem.org/cli/recotem/pkg/api"
 	"recotem.org/cli/recotem/pkg/cfg"
+	"recotem.org/cli/recotem/pkg/openapi"
 	"recotem.org/cli/recotem/pkg/utils"
 )
 
@@ -144,7 +145,7 @@ func parameterTuningJobCreateCommand() *cli.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println("Created Parameter Tuning Job ID: ", parameterTuningJob.Id)
+			printParameterTuningJob(*parameterTuningJob)
 			return nil
 		},
 	}
@@ -199,16 +200,29 @@ func parameterTuningJobListCommand() *cli.Command {
 				return err
 			}
 			for _, x := range *ptjList.Results {
-				size := len(x.TaskLinks)
-				if size > 0 {
-					task := x.TaskLinks[size-1].Task
-					fmt.Println(x.Id, x.InsDatetime, *task.Status)
-				} else {
-					fmt.Println(x.Id)
-				}
+				printParameterTuningJob(x)
 			}
 			return nil
 		},
 	}
 	return &cmd
+}
+
+func printParameterTuningJob(x openapi.ParameterTuningJob) {
+	size := len(x.TaskLinks)
+	if size > 0 {
+		task := x.TaskLinks[size-1].Task
+		var status string
+		if task.Status != nil {
+			status = string(*task.Status)
+		} else {
+			status = utils.NoValue
+		}
+		fmt.Println(x.Id,
+			utils.FormatTime(x.InsDatetime),
+			status,
+			utils.Itoa(x.TunedModel))
+	} else {
+		fmt.Println(x.Id)
+	}
 }

@@ -128,5 +128,9 @@ func modelConfigurationListCommand() *cli.Command {
 }
 
 func printModelConfiguration(x openapi.ModelConfiguration) {
-	fmt.Println(x.Id, x.Project, x.RecommenderClassName, x.TuningJob, *x.Name)
+	fmt.Println(x.Id,
+		x.Project,
+		x.RecommenderClassName,
+		x.TuningJob,
+		utils.FormatName(utils.Atoa(x.Name)))
 }
