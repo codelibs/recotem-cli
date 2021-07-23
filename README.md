@@ -1,5 +1,19 @@
 # recotem-cli
 
+## Usage
+
+### Install
+
+```
+$ go install recotem.org/cli/recotem@latest
+```
+
+### Use recotem command
+
+```
+$ recotem <command> <sub-command> ...
+```
+
 ## Development
 
 ### OpenAPI
