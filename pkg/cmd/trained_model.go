@@ -18,6 +18,7 @@ func TrainedModelCommand() *cli.Command {
 		Usage:   "options for trained model",
 		Subcommands: []*cli.Command{
 			trainedModelCreateCommand(),
+			trainedModelDeleteCommand(),
 			trainedModelDownloadCommand(),
 			trainedModelListCommand(),
 		},
@@ -76,6 +77,39 @@ func trainedModelCreateCommand() *cli.Command {
 				return err
 			}
 			printTrainedModel(*trainedModel)
+			return nil
+		},
+	}
+	return &cmd
+}
+
+func trainedModelDeleteCommand() *cli.Command {
+	cmd := cli.Command{
+		Name:  "delete",
+		Usage: "delete the trained model",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "id",
+				Aliases:  []string{"i"},
+				Usage:    "Trained model ID",
+				Required: true,
+			},
+		},
+		Action: func(c *cli.Context) error {
+			config, err := cfg.LoadRecotemConfig()
+			if err != nil {
+				return err
+			}
+			client := api.NewClient(c.Context, config)
+			id, err := strconv.Atoi(c.String("id"))
+			if err != nil {
+				return err
+			}
+			err = client.DeleteTrainedModel(id)
+			if err != nil {
+				return err
+			}
+			fmt.Println(id)
 			return nil
 		},
 	}

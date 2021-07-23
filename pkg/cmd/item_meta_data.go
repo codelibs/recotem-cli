@@ -17,6 +17,7 @@ func ItemMetaDataCommand() *cli.Command {
 		Aliases: []string{"imd"},
 		Usage:   "options for item meta data",
 		Subcommands: []*cli.Command{
+			itemMetaDataDeleteCommand(),
 			itemMetaDataListCommand(),
 			itemMetaDataUploadCommand(),
 		},
@@ -57,6 +58,39 @@ func itemMetaDataUploadCommand() *cli.Command {
 				return err
 			}
 			printItemMetaData(*itemMetaData)
+			return nil
+		},
+	}
+	return &cmd
+}
+
+func itemMetaDataDeleteCommand() *cli.Command {
+	cmd := cli.Command{
+		Name:  "delete",
+		Usage: "delete the item-meta data",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "id",
+				Aliases:  []string{"i"},
+				Usage:    "Item meta data ID",
+				Required: true,
+			},
+		},
+		Action: func(c *cli.Context) error {
+			config, err := cfg.LoadRecotemConfig()
+			if err != nil {
+				return err
+			}
+			client := api.NewClient(c.Context, config)
+			id, err := strconv.Atoi(c.String("id"))
+			if err != nil {
+				return err
+			}
+			err = client.DeleteItemMetaData(id)
+			if err != nil {
+				return err
+			}
+			fmt.Println(id)
 			return nil
 		},
 	}

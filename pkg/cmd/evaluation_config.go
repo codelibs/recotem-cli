@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/urfave/cli/v2"
 	"recotem.org/cli/recotem/pkg/api"
@@ -17,6 +18,7 @@ func EvaluationConfigCommand() *cli.Command {
 		Usage:   "options for evaluation config",
 		Subcommands: []*cli.Command{
 			evaluationConfigCreateCommand(),
+			evaluationConfigDeleteCommand(),
 			evaluationConfigListCommand(),
 		},
 	}
@@ -58,6 +60,39 @@ func evaluationConfigCreateCommand() *cli.Command {
 				return err
 			}
 			printEvaluationConfig(*evaluationConfig)
+			return nil
+		},
+	}
+	return &cmd
+}
+
+func evaluationConfigDeleteCommand() *cli.Command {
+	cmd := cli.Command{
+		Name:  "delete",
+		Usage: "delete the evaluation config",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "id",
+				Aliases:  []string{"i"},
+				Usage:    "Evaluation config ID",
+				Required: true,
+			},
+		},
+		Action: func(c *cli.Context) error {
+			config, err := cfg.LoadRecotemConfig()
+			if err != nil {
+				return err
+			}
+			client := api.NewClient(c.Context, config)
+			id, err := strconv.Atoi(c.String("id"))
+			if err != nil {
+				return err
+			}
+			err = client.DeleteEvaluationConfig(id)
+			if err != nil {
+				return err
+			}
+			fmt.Println(id)
 			return nil
 		},
 	}

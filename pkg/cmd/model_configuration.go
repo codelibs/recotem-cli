@@ -18,6 +18,7 @@ func ModelConfigurationCommand() *cli.Command {
 		Usage:   "options for model configuration",
 		Subcommands: []*cli.Command{
 			modelConfigurationCreateCommand(),
+			modelConfigurationDeleteCommand(),
 			modelConfigurationListCommand(),
 		},
 	}
@@ -72,6 +73,39 @@ func modelConfigurationCreateCommand() *cli.Command {
 				return err
 			}
 			printModelConfiguration(*modelConfiguration)
+			return nil
+		},
+	}
+	return &cmd
+}
+
+func modelConfigurationDeleteCommand() *cli.Command {
+	cmd := cli.Command{
+		Name:  "delete",
+		Usage: "delete the model configuration",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "id",
+				Aliases:  []string{"i"},
+				Usage:    "Model configuration ID",
+				Required: true,
+			},
+		},
+		Action: func(c *cli.Context) error {
+			config, err := cfg.LoadRecotemConfig()
+			if err != nil {
+				return err
+			}
+			client := api.NewClient(c.Context, config)
+			id, err := strconv.Atoi(c.String("id"))
+			if err != nil {
+				return err
+			}
+			err = client.DeleteModelConfiguration(id)
+			if err != nil {
+				return err
+			}
+			fmt.Println(id)
 			return nil
 		},
 	}

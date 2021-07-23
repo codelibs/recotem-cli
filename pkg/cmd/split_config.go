@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/urfave/cli/v2"
 	"recotem.org/cli/recotem/pkg/api"
@@ -17,6 +18,7 @@ func SplitConfigCommand() *cli.Command {
 		Usage:   "options for split config",
 		Subcommands: []*cli.Command{
 			splitConfigCreateCommand(),
+			splitConfigDeleteCommand(),
 			splitConfigListCommand(),
 		},
 	}
@@ -82,6 +84,39 @@ func splitConfigCreateCommand() *cli.Command {
 				return err
 			}
 			printSplitConfig(*splitConfig)
+			return nil
+		},
+	}
+	return &cmd
+}
+
+func splitConfigDeleteCommand() *cli.Command {
+	cmd := cli.Command{
+		Name:  "delete",
+		Usage: "delete the split config",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "id",
+				Aliases:  []string{"i"},
+				Usage:    "Split config ID",
+				Required: true,
+			},
+		},
+		Action: func(c *cli.Context) error {
+			config, err := cfg.LoadRecotemConfig()
+			if err != nil {
+				return err
+			}
+			client := api.NewClient(c.Context, config)
+			id, err := strconv.Atoi(c.String("id"))
+			if err != nil {
+				return err
+			}
+			err = client.DeleteSplitConfig(id)
+			if err != nil {
+				return err
+			}
+			fmt.Println(id)
 			return nil
 		},
 	}

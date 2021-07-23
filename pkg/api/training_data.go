@@ -58,6 +58,24 @@ func (c Client) UploadTrainingData(projectId int, uploadPath string) (*openapi.T
 	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
 }
 
+func (c Client) DeleteTrainingData(id int) error {
+	client, err := c.newApiClient()
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.TrainingDataDestroyWithResponse(c.Context, id)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode() >= 200 && resp.StatusCode() < 300 {
+		return nil
+	}
+
+	return fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+}
+
 func (c Client) GetTrainingData(id *int, page *int, pageSize *int, project *int) (*openapi.PaginatedTrainingDataList, error) {
 	client, err := c.newApiClient()
 	if err != nil {

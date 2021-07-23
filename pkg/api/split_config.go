@@ -34,6 +34,24 @@ func (c Client) CreateSplitConfig(name *string, scheme *openapi.SchemeEnum, held
 	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
 }
 
+func (c Client) DeleteSplitConfig(id int) error {
+	client, err := c.newApiClient()
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.SplitConfigDestroyWithResponse(c.Context, id)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode() >= 200 && resp.StatusCode() < 300 {
+		return nil
+	}
+
+	return fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+}
+
 func (c Client) GetSplitConfigs(id *int, name *string, unnamed *bool) (*[]openapi.SplitConfig, error) {
 	client, err := c.newApiClient()
 	if err != nil {

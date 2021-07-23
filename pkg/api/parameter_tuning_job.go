@@ -44,6 +44,24 @@ func (c Client) CreateParameterTuningJob(data int, split int, evaluation int, nT
 	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
 }
 
+func (c Client) DeleteParameterTuningJob(id int) error {
+	client, err := c.newApiClient()
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.ParameterTuningJobDestroyWithResponse(c.Context, id)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode() >= 200 && resp.StatusCode() < 300 {
+		return nil
+	}
+
+	return fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+}
+
 func (c Client) GetParameterTuningJobs(data *int, dataProject *int, id *int, page *int,
 	pageSize *int) (*openapi.PaginatedParameterTuningJobList, error) {
 	client, err := c.newApiClient()

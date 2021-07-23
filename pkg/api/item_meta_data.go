@@ -58,6 +58,24 @@ func (c Client) UploadItemMetaData(projectId int, uploadPath string) (*openapi.I
 	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
 }
 
+func (c Client) DeleteItemMetaData(id int) error {
+	client, err := c.newApiClient()
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.ItemMetaDataDestroyWithResponse(c.Context, id)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode() >= 200 && resp.StatusCode() < 300 {
+		return nil
+	}
+
+	return fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+}
+
 func (c Client) GetItemMetaData(id *int, page *int, pageSize *int, project *int) (*openapi.PaginatedItemMetaDataList, error) {
 	client, err := c.newApiClient()
 	if err != nil {

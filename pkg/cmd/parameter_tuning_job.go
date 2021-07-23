@@ -18,6 +18,7 @@ func ParameterTuningJobCommand() *cli.Command {
 		Usage:   "options for parameter tuning job",
 		Subcommands: []*cli.Command{
 			parameterTuningJobCreateCommand(),
+			parameterTuningJobDeleteCommand(),
 			parameterTuningJobListCommand(),
 		},
 	}
@@ -146,6 +147,39 @@ func parameterTuningJobCreateCommand() *cli.Command {
 				return err
 			}
 			printParameterTuningJob(*parameterTuningJob)
+			return nil
+		},
+	}
+	return &cmd
+}
+
+func parameterTuningJobDeleteCommand() *cli.Command {
+	cmd := cli.Command{
+		Name:  "delete",
+		Usage: "delete the parameter tuning job",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "id",
+				Aliases:  []string{"i"},
+				Usage:    "Parameter tuning job ID",
+				Required: true,
+			},
+		},
+		Action: func(c *cli.Context) error {
+			config, err := cfg.LoadRecotemConfig()
+			if err != nil {
+				return err
+			}
+			client := api.NewClient(c.Context, config)
+			id, err := strconv.Atoi(c.String("id"))
+			if err != nil {
+				return err
+			}
+			err = client.DeleteParameterTuningJob(id)
+			if err != nil {
+				return err
+			}
+			fmt.Println(id)
 			return nil
 		},
 	}

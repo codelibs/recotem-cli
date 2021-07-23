@@ -17,6 +17,7 @@ func TrainingDataCommand() *cli.Command {
 		Aliases: []string{"td"},
 		Usage:   "options for training data",
 		Subcommands: []*cli.Command{
+			trainingDataDeleteCommand(),
 			trainingDataListCommand(),
 			trainingDataUploadCommand(),
 		},
@@ -57,6 +58,39 @@ func trainingDataUploadCommand() *cli.Command {
 				return err
 			}
 			printTrainingData(*trainingData)
+			return nil
+		},
+	}
+	return &cmd
+}
+
+func trainingDataDeleteCommand() *cli.Command {
+	cmd := cli.Command{
+		Name:  "delete",
+		Usage: "delete the training data",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "id",
+				Aliases:  []string{"i"},
+				Usage:    "Training data ID",
+				Required: true,
+			},
+		},
+		Action: func(c *cli.Context) error {
+			config, err := cfg.LoadRecotemConfig()
+			if err != nil {
+				return err
+			}
+			client := api.NewClient(c.Context, config)
+			id, err := strconv.Atoi(c.String("id"))
+			if err != nil {
+				return err
+			}
+			err = client.DeleteTrainingData(id)
+			if err != nil {
+				return err
+			}
+			fmt.Println(id)
 			return nil
 		},
 	}

@@ -30,6 +30,24 @@ func (c Client) CreateEvaluationConfig(name *string, cutoff *int,
 	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
 }
 
+func (c Client) DeleteEvaluationConfig(id int) error {
+	client, err := c.newApiClient()
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.EvaluationConfigDestroyWithResponse(c.Context, id)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode() >= 200 && resp.StatusCode() < 300 {
+		return nil
+	}
+
+	return fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+}
+
 func (c Client) GetEvaluationConfigs(id *int, name *string,
 	unnamed *bool) (*[]openapi.EvaluationConfig, error) {
 	client, err := c.newApiClient()

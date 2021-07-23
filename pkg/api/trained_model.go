@@ -32,6 +32,24 @@ func (c Client) CreateTrainedModel(configuration int, dataLoc int, file *string,
 	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
 }
 
+func (c Client) DeleteTrainedModel(id int) error {
+	client, err := c.newApiClient()
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.TrainedModelDestroyWithResponse(c.Context, id)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode() >= 200 && resp.StatusCode() < 300 {
+		return nil
+	}
+
+	return fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+}
+
 func (c Client) GetTrainedModels(dataLoc *int, dataLocProject *int, id *int, page *int,
 	pageSize *int) (*openapi.PaginatedTrainedModelList, error) {
 	client, err := c.newApiClient()

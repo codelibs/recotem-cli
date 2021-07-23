@@ -31,6 +31,24 @@ func (c Client) CreateModelConfiguration(name *string, project int, recommenderC
 	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
 }
 
+func (c Client) DeleteModelConfiguration(id int) error {
+	client, err := c.newApiClient()
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.ModelConfigurationDestroyWithResponse(c.Context, id)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode() >= 200 && resp.StatusCode() < 300 {
+		return nil
+	}
+
+	return fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+}
+
 func (c Client) GetModelConfigurations(id *int, page *int, pageSize *int,
 	project *int) (*openapi.PaginatedModelConfigurationList, error) {
 	client, err := c.newApiClient()

@@ -101,7 +101,7 @@ func projectDeleteCommand() *cli.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println("Deleted:", id)
+			fmt.Println(id)
 			return nil
 		},
 	}
