@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -37,4 +38,12 @@ func FormatTime(t time.Time) string {
 
 func FormatName(s string) string {
 	return strings.ReplaceAll(s, " ", "_")
+}
+
+func PrintId(format string, id int) {
+	if format == "json" {
+		fmt.Println(fmt.Sprintf("{\"id\":\"%d\"}", id))
+	} else {
+		fmt.Println(id)
+	}
 }

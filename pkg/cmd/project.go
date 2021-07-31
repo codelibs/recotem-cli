@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -53,6 +54,12 @@ func projectCreateCommand() *cli.Command {
 				Aliases: []string{"t"},
 				Usage:   "Time column",
 			},
+			&cli.StringFlag{
+				Name:        "format",
+				Aliases:     []string{"fmt"},
+				Usage:       "Output format",
+				DefaultText: "line",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			config, err := cfg.LoadRecotemConfig()
@@ -68,7 +75,7 @@ func projectCreateCommand() *cli.Command {
 			if err != nil {
 				return err
 			}
-			printProject(*project)
+			printProject(c.String("format"), *project)
 			return nil
 		},
 	}
@@ -86,6 +93,12 @@ func projectDeleteCommand() *cli.Command {
 				Usage:    "Project ID",
 				Required: true,
 			},
+			&cli.StringFlag{
+				Name:        "format",
+				Aliases:     []string{"fmt"},
+				Usage:       "Output format",
+				DefaultText: "line",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			config, err := cfg.LoadRecotemConfig()
@@ -101,7 +114,7 @@ func projectDeleteCommand() *cli.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println(id)
+			utils.PrintId(c.String("format"), id)
 			return nil
 		},
 	}
@@ -123,6 +136,12 @@ func projectListCommand() *cli.Command {
 				Aliases: []string{"n"},
 				Usage:   "Project name",
 			},
+			&cli.StringFlag{
+				Name:        "format",
+				Aliases:     []string{"fmt"},
+				Usage:       "Output format",
+				DefaultText: "line",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			config, err := cfg.LoadRecotemConfig()
@@ -137,7 +156,7 @@ func projectListCommand() *cli.Command {
 				return err
 			}
 			for _, x := range *projects {
-				printProject(x)
+				printProject(c.String("format"), x)
 			}
 			return nil
 		},
@@ -145,10 +164,25 @@ func projectListCommand() *cli.Command {
 	return &cmd
 }
 
-func printProject(x openapi.Project) {
-	fmt.Println(x.Id,
-		x.Name,
-		x.UserColumn,
-		x.ItemColumn,
-		utils.Atoa(x.TimeColumn))
+func printProject(format string, x openapi.Project) {
+	if format == "json" {
+		body := map[string]string{
+			"id":          strconv.Itoa(x.Id),
+			"name":        x.Name,
+			"user_column": x.UserColumn,
+			"item_column": x.ItemColumn,
+			"time_column": utils.Atoa(x.TimeColumn)}
+		bytes, err := json.Marshal(body)
+		if err != nil {
+			fmt.Println("JSON marshal error: ", err)
+			return
+		}
+		fmt.Println(string(bytes))
+	} else {
+		fmt.Println(x.Id,
+			x.Name,
+			x.UserColumn,
+			x.ItemColumn,
+			utils.Atoa(x.TimeColumn))
+	}
 }
