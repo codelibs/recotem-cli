@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -45,6 +46,12 @@ func evaluationConfigCreateCommand() *cli.Command {
 				Aliases: []string{"tm"},
 				Usage:   "Target metric (ndcg|map|recall|hit)",
 			},
+			&cli.StringFlag{
+				Name:        "format",
+				Aliases:     []string{"fmt"},
+				Usage:       "Output format",
+				DefaultText: "line",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			config, err := cfg.LoadRecotemConfig()
@@ -59,7 +66,7 @@ func evaluationConfigCreateCommand() *cli.Command {
 			if err != nil {
 				return err
 			}
-			printEvaluationConfig(*evaluationConfig)
+			printEvaluationConfig(c.String("format"), *evaluationConfig)
 			return nil
 		},
 	}
@@ -77,6 +84,12 @@ func evaluationConfigDeleteCommand() *cli.Command {
 				Usage:    "Evaluation config ID",
 				Required: true,
 			},
+			&cli.StringFlag{
+				Name:        "format",
+				Aliases:     []string{"fmt"},
+				Usage:       "Output format",
+				DefaultText: "line",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			config, err := cfg.LoadRecotemConfig()
@@ -92,7 +105,7 @@ func evaluationConfigDeleteCommand() *cli.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println(id)
+			utils.PrintId(c.String("format"), id)
 			return nil
 		},
 	}
@@ -119,6 +132,12 @@ func evaluationConfigListCommand() *cli.Command {
 				Aliases: []string{"u"},
 				Usage:   "Unnamed",
 			},
+			&cli.StringFlag{
+				Name:        "format",
+				Aliases:     []string{"fmt"},
+				Usage:       "Output format",
+				DefaultText: "line",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			config, err := cfg.LoadRecotemConfig()
@@ -134,7 +153,7 @@ func evaluationConfigListCommand() *cli.Command {
 				return err
 			}
 			for _, x := range *evaluationConfigs {
-				printEvaluationConfig(x)
+				printEvaluationConfig(c.String("format"), x)
 			}
 			return nil
 		},
@@ -142,16 +161,30 @@ func evaluationConfigListCommand() *cli.Command {
 	return &cmd
 }
 
-func printEvaluationConfig(x openapi.EvaluationConfig) {
+func printEvaluationConfig(format string, x openapi.EvaluationConfig) {
 	var targetMetric string
 	if x.TargetMetric != nil {
 		targetMetric = string(*x.TargetMetric)
 	} else {
 		targetMetric = utils.NoValue
 	}
-	fmt.Println(
-		x.Id,
-		utils.Itoa(x.Cutoff),
-		targetMetric,
-		utils.FormatName(utils.Atoa(x.Name)))
+	if format == "json" {
+		body := map[string]string{
+			"id":            strconv.Itoa(x.Id),
+			"cutoff":        utils.Itoa(x.Cutoff),
+			"target_metric": targetMetric,
+			"name":          utils.Atoa(x.Name)}
+		bytes, err := json.Marshal(body)
+		if err != nil {
+			fmt.Println("JSON marshal error: ", err)
+			return
+		}
+		fmt.Println(string(bytes))
+	} else {
+		fmt.Println(
+			x.Id,
+			utils.Itoa(x.Cutoff),
+			targetMetric,
+			utils.FormatName(utils.Atoa(x.Name)))
+	}
 }
