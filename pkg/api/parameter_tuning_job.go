@@ -41,7 +41,7 @@ func (c Client) CreateParameterTuningJob(data int, split int, evaluation int, nT
 		return resp.JSON201, nil
 	}
 
-	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
 
 func (c Client) DeleteParameterTuningJob(id int) error {
@@ -59,7 +59,7 @@ func (c Client) DeleteParameterTuningJob(id int) error {
 		return nil
 	}
 
-	return fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
 
 func (c Client) GetParameterTuningJobs(data *int, dataProject *int, id *int, page *int,
@@ -88,5 +88,5 @@ func (c Client) GetParameterTuningJobs(data *int, dataProject *int, id *int, pag
 		return resp.JSON200, nil
 	}
 
-	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }

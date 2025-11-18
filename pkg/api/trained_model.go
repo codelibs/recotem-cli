@@ -2,7 +2,7 @@ package api
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"recotem.org/cli/recotem/pkg/openapi"
 )
@@ -29,7 +29,7 @@ func (c Client) CreateTrainedModel(configuration int, dataLoc int, file *string,
 		return resp.JSON201, nil
 	}
 
-	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
 
 func (c Client) DeleteTrainedModel(id int) error {
@@ -47,7 +47,7 @@ func (c Client) DeleteTrainedModel(id int) error {
 		return nil
 	}
 
-	return fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
 
 func (c Client) GetTrainedModels(dataLoc *int, dataLocProject *int, id *int, page *int,
@@ -76,7 +76,7 @@ func (c Client) GetTrainedModels(dataLoc *int, dataLocProject *int, id *int, pag
 		return resp.JSON200, nil
 	}
 
-	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
 
 func (c Client) DownloadTrainedModel(id int, output string) error {
@@ -91,10 +91,10 @@ func (c Client) DownloadTrainedModel(id int, output string) error {
 	}
 
 	if resp.StatusCode() != 200 {
-		return fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+		return fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 	}
 
-	err = ioutil.WriteFile(output, resp.Body, 0644)
+	err = os.WriteFile(output, resp.Body, 0644)
 	if err != nil {
 		return err
 	}

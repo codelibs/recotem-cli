@@ -27,7 +27,7 @@ func (c Client) CreateEvaluationConfig(name *string, cutoff *int,
 		return resp.JSON201, nil
 	}
 
-	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
 
 func (c Client) DeleteEvaluationConfig(id int) error {
@@ -45,7 +45,7 @@ func (c Client) DeleteEvaluationConfig(id int) error {
 		return nil
 	}
 
-	return fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
 
 func (c Client) GetEvaluationConfigs(id *int, name *string,
@@ -72,5 +72,5 @@ func (c Client) GetEvaluationConfigs(id *int, name *string,
 		return resp.JSON200, nil
 	}
 
-	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }

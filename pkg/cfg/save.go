@@ -1,7 +1,6 @@
 package cfg
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -21,7 +20,7 @@ func (c RecotemConfig) save(configPath string) error {
 		}
 	}
 
-	err = ioutil.WriteFile(configPath, out, os.ModePerm)
+	err = os.WriteFile(configPath, out, os.ModePerm)
 	if err != nil {
 		return err
 	}

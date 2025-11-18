@@ -17,7 +17,7 @@ type Client struct {
 func NewClient(context context.Context, config cfg.RecotemConfig) Client {
 	client := Client{
 		Context: context,
-		Config: config,
+		Config:  config,
 	}
 	return client
 }

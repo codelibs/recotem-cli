@@ -204,7 +204,7 @@ func parameterTuningJobListCommand() *cli.Command {
 			&cli.StringFlag{
 				Name:    "id",
 				Aliases: []string{"i"},
-				Usage:   "Prameter tuning job ID",
+				Usage:   "Parameter tuning job ID",
 			},
 			&cli.StringFlag{
 				Name:    "page",

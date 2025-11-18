@@ -31,7 +31,7 @@ func (c Client) CreateSplitConfig(name *string, scheme *openapi.SchemeEnum, held
 		return resp.JSON201, nil
 	}
 
-	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
 
 func (c Client) DeleteSplitConfig(id int) error {
@@ -49,7 +49,7 @@ func (c Client) DeleteSplitConfig(id int) error {
 		return nil
 	}
 
-	return fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
 
 func (c Client) GetSplitConfigs(id *int, name *string, unnamed *bool) (*[]openapi.SplitConfig, error) {
@@ -75,5 +75,5 @@ func (c Client) GetSplitConfigs(id *int, name *string, unnamed *bool) (*[]openap
 		return resp.JSON200, nil
 	}
 
-	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
