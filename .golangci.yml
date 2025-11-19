@@ -1,8 +1,6 @@
 run:
   timeout: 5m
   tests: true
-  skip-dirs:
-    - pkg/openapi
   modules-download-mode: readonly
 
 linters:
@@ -30,7 +28,8 @@ linters-settings:
     check-blank: true
 
   govet:
-    check-shadowing: true
+    enable:
+      - shadow
 
   gofmt:
     simplify: true
@@ -67,8 +66,6 @@ issues:
   new: false
 
 output:
-  format: colored-line-number
   print-issued-lines: true
   print-linter-name: true
-  uniq-by-line: true
   sort-results: true
