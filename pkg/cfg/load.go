@@ -13,7 +13,9 @@ func LoadRecotemConfig() (RecotemConfig, error) {
 	_, err = os.Stat(configPath)
 	if err != nil {
 		c := NewRectemConfig("http://localhost:8000")
-		c.save(configPath)
+		if saveErr := c.save(configPath); saveErr != nil {
+			return RecotemConfig{}, saveErr
+		}
 		return c, nil
 	}
 

@@ -14,13 +14,13 @@ func (c RecotemConfig) save(configPath string) error {
 	}
 
 	configDir := filepath.Dir(configPath)
-	if _, err := os.Stat(configDir); os.IsNotExist(err) {
-		if err := os.MkdirAll(configDir, 0755); err != nil {
-			return err
+	if _, statErr := os.Stat(configDir); os.IsNotExist(statErr) {
+		if mkdirErr := os.MkdirAll(configDir, 0755); mkdirErr != nil {
+			return mkdirErr
 		}
 	}
 
-	err = os.WriteFile(configPath, out, os.ModePerm)
+	err = os.WriteFile(configPath, out, 0600)
 	if err != nil {
 		return err
 	}

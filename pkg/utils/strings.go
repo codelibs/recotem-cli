@@ -42,7 +42,7 @@ func FormatName(s string) string {
 
 func PrintId(format string, id int) {
 	if format == "json" {
-		fmt.Println(fmt.Sprintf("{\"id\":\"%d\"}", id))
+		fmt.Printf("{\"id\":\"%d\"}\n", id)
 	} else {
 		fmt.Println(id)
 	}

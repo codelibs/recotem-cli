@@ -99,9 +99,8 @@ func TestConfigPath(t *testing.T) {
 	}
 
 	// Should end with .recotem/config.yaml
-	expectedSuffix := filepath.Join(".recotem", "config.yaml")
-	if !filepath.HasPrefix(filepath.Base(path), "config.yaml") {
-		t.Errorf("path should end with %s, got %s", expectedSuffix, path)
+	if filepath.Base(path) != "config.yaml" {
+		t.Errorf("path should end with config.yaml, got %s", path)
 	}
 }
 

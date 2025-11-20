@@ -88,9 +88,9 @@ func TestConfigPathValidity(t *testing.T) {
 		t.Errorf("configPath should return absolute path, got %s", path)
 	}
 
-	// Should contain .recotem
-	if !filepath.HasPrefix(path, string(os.PathSeparator)) {
-		t.Errorf("configPath should start with path separator, got %s", path)
+	// Verify path contains .recotem directory
+	if filepath.Base(filepath.Dir(path)) != ".recotem" {
+		t.Errorf("configPath should contain .recotem directory, got %s", path)
 	}
 }
 
@@ -105,7 +105,7 @@ func TestConfigFileCreation(t *testing.T) {
 	configPath := filepath.Join(tmpDir, ".recotem", "config.yaml")
 
 	// Verify file doesn't exist
-	if _, err := os.Stat(configPath); !os.IsNotExist(err) {
+	if _, statErr := os.Stat(configPath); !os.IsNotExist(statErr) {
 		t.Fatal("config file should not exist yet")
 	}
 
@@ -117,7 +117,7 @@ func TestConfigFileCreation(t *testing.T) {
 	}
 
 	// Verify file exists now
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+	if _, statErr := os.Stat(configPath); os.IsNotExist(statErr) {
 		t.Error("config file should exist after save")
 	}
 

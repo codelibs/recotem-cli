@@ -94,7 +94,7 @@ func (c Client) DownloadTrainedModel(id int, output string) error {
 		return fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 	}
 
-	err = os.WriteFile(output, resp.Body, 0644)
+	err = os.WriteFile(output, resp.Body, 0600)
 	if err != nil {
 		return err
 	}

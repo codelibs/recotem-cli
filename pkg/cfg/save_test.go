@@ -28,7 +28,7 @@ func TestSaveRecotemConfig(t *testing.T) {
 	}
 
 	// Verify file exists
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+	if _, statErr := os.Stat(configPath); os.IsNotExist(statErr) {
 		t.Errorf("config file was not created at %s", configPath)
 	}
 
@@ -75,7 +75,7 @@ func TestSaveCreatesDirectory(t *testing.T) {
 	}
 
 	// Verify file exists
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+	if _, statErr := os.Stat(configPath); os.IsNotExist(statErr) {
 		t.Errorf("config file was not created at %s", configPath)
 	}
 }

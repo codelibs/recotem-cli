@@ -132,7 +132,10 @@ func TestPrintId(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Capture stdout
 			old := os.Stdout
-			r, w, _ := os.Pipe()
+			r, w, err := os.Pipe()
+			if err != nil {
+				t.Fatalf("failed to create pipe: %v", err)
+			}
 			os.Stdout = w
 
 			PrintId(tt.format, tt.id)
@@ -141,7 +144,9 @@ func TestPrintId(t *testing.T) {
 			os.Stdout = old
 
 			var buf bytes.Buffer
-			io.Copy(&buf, r)
+			if _, err := io.Copy(&buf, r); err != nil {
+				t.Fatalf("failed to copy output: %v", err)
+			}
 			result := buf.String()
 
 			if result != tt.expected {
@@ -155,7 +160,10 @@ func TestPrintId(t *testing.T) {
 func TestPrintIdEdgeCases(t *testing.T) {
 	// Capture stdout
 	old := os.Stdout
-	r, w, _ := os.Pipe()
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("failed to create pipe: %v", err)
+	}
 	os.Stdout = w
 
 	PrintId("json", 0)
@@ -164,7 +172,9 @@ func TestPrintIdEdgeCases(t *testing.T) {
 	os.Stdout = old
 
 	var buf bytes.Buffer
-	io.Copy(&buf, r)
+	if _, err := io.Copy(&buf, r); err != nil {
+		t.Fatalf("failed to copy output: %v", err)
+	}
 	result := buf.String()
 
 	expected := "{\"id\":\"0\"}\n"
@@ -229,10 +239,13 @@ func TestNoValueConstant(t *testing.T) {
 	}
 }
 
-// Test that PrintId actually uses fmt.Println
+// Test that PrintId actually uses fmt.Printf
 func TestPrintIdUsesFormatting(t *testing.T) {
 	old := os.Stdout
-	r, w, _ := os.Pipe()
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("failed to create pipe: %v", err)
+	}
 	os.Stdout = w
 
 	id := 999
@@ -242,10 +255,12 @@ func TestPrintIdUsesFormatting(t *testing.T) {
 	os.Stdout = old
 
 	var buf bytes.Buffer
-	io.Copy(&buf, r)
+	if _, err := io.Copy(&buf, r); err != nil {
+		t.Fatalf("failed to copy output: %v", err)
+	}
 	result := buf.String()
 
-	// Verify it matches what we expect from fmt.Println(fmt.Sprintf(...))
+	// Verify it matches what we expect from fmt.Printf
 	expected := fmt.Sprintf("{\"id\":\"%d\"}\n", id)
 	if result != expected {
 		t.Errorf("expected %v, got %v", expected, result)
