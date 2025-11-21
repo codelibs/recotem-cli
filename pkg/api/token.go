@@ -43,5 +43,5 @@ func (c Client) GetToken(username string, password string) (*openapi.AuthToken, 
 		return resp.JSON200, nil
 	}
 
-	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }

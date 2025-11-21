@@ -28,7 +28,7 @@ func (c Client) CreateModelConfiguration(name *string, project int, recommenderC
 		return resp.JSON201, nil
 	}
 
-	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
 
 func (c Client) DeleteModelConfiguration(id int) error {
@@ -46,7 +46,7 @@ func (c Client) DeleteModelConfiguration(id int) error {
 		return nil
 	}
 
-	return fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
 
 func (c Client) GetModelConfigurations(id *int, page *int, pageSize *int,
@@ -74,5 +74,5 @@ func (c Client) GetModelConfigurations(id *int, page *int, pageSize *int,
 		return resp.JSON200, nil
 	}
 
-	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }

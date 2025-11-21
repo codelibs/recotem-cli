@@ -13,7 +13,7 @@ func LoginCommand() *cli.Command {
 	cmd := cli.Command{
 		Name:    "login",
 		Aliases: []string{},
-		Usage:   "get an gaccess token",
+		Usage:   "get an access token",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "username",

@@ -55,7 +55,7 @@ func (c Client) UploadTrainingData(projectId int, uploadPath string) (*openapi.T
 		return resp.JSON201, nil
 	}
 
-	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
 
 func (c Client) DeleteTrainingData(id int) error {
@@ -73,7 +73,7 @@ func (c Client) DeleteTrainingData(id int) error {
 		return nil
 	}
 
-	return fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
 
 func (c Client) GetTrainingData(id *int, page *int, pageSize *int, project *int) (*openapi.PaginatedTrainingDataList, error) {
@@ -100,5 +100,5 @@ func (c Client) GetTrainingData(id *int, page *int, pageSize *int, project *int)
 		return resp.JSON200, nil
 	}
 
-	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }

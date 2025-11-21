@@ -42,7 +42,7 @@ func getUsername(u string, reader *bufio.Reader) (string, error) {
 func getPassword(p string) (string, error) {
 	if len(p) == 0 {
 		fmt.Print("Password: ")
-		bytePassword, err := term.ReadPassword(int(syscall.Stdin))
+		bytePassword, err := term.ReadPassword(syscall.Stdin)
 		fmt.Print("\n")
 		if err != nil {
 			return "", err

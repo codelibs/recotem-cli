@@ -1,7 +1,6 @@
 package cfg
 
 import (
-	"io/ioutil"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -23,7 +22,7 @@ func NewRectemConfig(url string) (c RecotemConfig) {
 }
 
 func NewRectemConfigFromFile(filename string) (RecotemConfig, error) {
-	buf, err := ioutil.ReadFile(filename)
+	buf, err := os.ReadFile(filename)
 	if err != nil {
 		return RecotemConfig{}, err
 	}

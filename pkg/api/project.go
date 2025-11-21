@@ -29,7 +29,7 @@ func (c Client) CreateProject(name string, userColumn string, itemColumn string,
 		return resp.JSON201, nil
 	}
 
-	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
 
 func (c Client) DeleteProject(id int) error {
@@ -47,7 +47,7 @@ func (c Client) DeleteProject(id int) error {
 		return nil
 	}
 
-	return fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
 
 func (c Client) GetProjects(id *int, name *string) (*[]openapi.Project, error) {
@@ -72,5 +72,5 @@ func (c Client) GetProjects(id *int, name *string) (*[]openapi.Project, error) {
 		return resp.JSON200, nil
 	}
 
-	return nil, fmt.Errorf(fmt.Sprintf("%s: %s", resp.Status(), string(resp.Body)))
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
