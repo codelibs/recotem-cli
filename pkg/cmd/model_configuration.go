@@ -46,7 +46,7 @@ func newModelConfigurationListCmd() *cobra.Command {
 				return err
 			}
 			for _, x := range *modelConfigs.Results {
-				printModelConfiguration(x)
+				printModelConfiguration(getOutputFormat(), x)
 			}
 			return nil
 		},
@@ -81,7 +81,7 @@ func newModelConfigurationCreateCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			printModelConfiguration(*mc)
+			printModelConfiguration(getOutputFormat(), *mc)
 			return nil
 		},
 	}
@@ -116,7 +116,7 @@ func newModelConfigurationDeleteCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println(idInt)
+			utils.PrintId(getOutputFormat(), idInt)
 			return nil
 		},
 	}
@@ -148,7 +148,7 @@ func newModelConfigurationUpdateCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			printModelConfiguration(*mc)
+			printModelConfiguration(getOutputFormat(), *mc)
 			return nil
 		},
 	}
@@ -162,10 +162,21 @@ func newModelConfigurationUpdateCmd() *cobra.Command {
 	return cmd
 }
 
-func printModelConfiguration(x openapi.ModelConfiguration) {
-	fmt.Println(x.Id,
-		x.Project,
-		x.RecommenderClassName,
-		x.TuningJob,
-		utils.FormatName(utils.Atoa(x.Name)))
+func printModelConfiguration(format string, x openapi.ModelConfiguration) {
+	if format == "json" || format == "yaml" {
+		m := map[string]any{
+			"id":                     x.Id,
+			"project":                x.Project,
+			"recommender_class_name": x.RecommenderClassName,
+			"tuning_job":             x.TuningJob,
+			"name":                   utils.FormatName(utils.Atoa(x.Name)),
+		}
+		utils.PrintOutput(format, m)
+	} else {
+		fmt.Println(x.Id,
+			x.Project,
+			x.RecommenderClassName,
+			x.TuningJob,
+			utils.FormatName(utils.Atoa(x.Name)))
+	}
 }

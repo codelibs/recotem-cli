@@ -46,7 +46,7 @@ func newParameterTuningJobListCmd() *cobra.Command {
 				return err
 			}
 			for _, x := range *ptjList.Results {
-				printParameterTuningJob(x)
+				printParameterTuningJob(getOutputFormat(), x)
 			}
 			return nil
 		},
@@ -103,7 +103,7 @@ func newParameterTuningJobCreateCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			printParameterTuningJob(*ptj)
+			printParameterTuningJob(getOutputFormat(), *ptj)
 			return nil
 		},
 	}
@@ -149,7 +149,7 @@ func newParameterTuningJobDeleteCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println(idInt)
+			utils.PrintId(getOutputFormat(), idInt)
 			return nil
 		},
 	}
@@ -160,7 +160,7 @@ func newParameterTuningJobDeleteCmd() *cobra.Command {
 	return cmd
 }
 
-func printParameterTuningJob(x openapi.ParameterTuningJob) {
+func printParameterTuningJob(format string, x openapi.ParameterTuningJob) {
 	if x.TaskLinks != nil && len(*x.TaskLinks) > 0 {
 		task := (*x.TaskLinks)[len(*x.TaskLinks)-1].Task
 		var status string
@@ -169,11 +169,28 @@ func printParameterTuningJob(x openapi.ParameterTuningJob) {
 		} else {
 			status = utils.NoValue
 		}
-		fmt.Println(x.Id,
-			utils.FormatTime(x.InsDatetime),
-			status,
-			utils.Itoa(x.TunedModel))
+		if format == "json" || format == "yaml" {
+			m := map[string]any{
+				"id":           x.Id,
+				"ins_datetime": utils.FormatTime(x.InsDatetime),
+				"status":       status,
+				"tuned_model":  utils.Itoa(x.TunedModel),
+			}
+			utils.PrintOutput(format, m)
+		} else {
+			fmt.Println(x.Id,
+				utils.FormatTime(x.InsDatetime),
+				status,
+				utils.Itoa(x.TunedModel))
+		}
 	} else {
-		fmt.Println(x.Id)
+		if format == "json" || format == "yaml" {
+			m := map[string]any{
+				"id": x.Id,
+			}
+			utils.PrintOutput(format, m)
+		} else {
+			fmt.Println(x.Id)
+		}
 	}
 }

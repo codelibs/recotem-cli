@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 	"recotem.org/cli/recotem/pkg/utils"
 )
@@ -39,7 +37,7 @@ func newTaskLogListCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println(string(result))
+			utils.PrintOutput(getOutputFormat(), string(result))
 			return nil
 		},
 	}

@@ -47,7 +47,7 @@ func newTrainingDataListCmd() *cobra.Command {
 				return err
 			}
 			for _, x := range *tdList.Results {
-				printTrainingData(x)
+				printTrainingData(getOutputFormat(), x)
 			}
 			return nil
 		},
@@ -80,7 +80,7 @@ func newTrainingDataUploadCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			printTrainingData(*trainingData)
+			printTrainingData(getOutputFormat(), *trainingData)
 			return nil
 		},
 	}
@@ -112,7 +112,7 @@ func newTrainingDataDeleteCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println(idInt)
+			utils.PrintId(getOutputFormat(), idInt)
 			return nil
 		},
 	}
@@ -185,10 +185,21 @@ func newTrainingDataPreviewCmd() *cobra.Command {
 	return cmd
 }
 
-func printTrainingData(x openapi.TrainingData) {
-	fmt.Println(x.Id,
-		x.Project,
-		utils.Atoa(x.Basename),
-		x.Filesize,
-		utils.FormatTime(x.InsDatetime))
+func printTrainingData(format string, x openapi.TrainingData) {
+	if format == "json" || format == "yaml" {
+		m := map[string]any{
+			"id":           x.Id,
+			"project":      x.Project,
+			"basename":     utils.Atoa(x.Basename),
+			"filesize":     x.Filesize,
+			"ins_datetime": utils.FormatTime(x.InsDatetime),
+		}
+		utils.PrintOutput(format, m)
+	} else {
+		fmt.Println(x.Id,
+			x.Project,
+			utils.Atoa(x.Basename),
+			x.Filesize,
+			utils.FormatTime(x.InsDatetime))
+	}
 }

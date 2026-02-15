@@ -46,7 +46,7 @@ func newItemMetaDataListCmd() *cobra.Command {
 				return err
 			}
 			for _, x := range *tdList.Results {
-				printItemMetaData(x)
+				printItemMetaData(getOutputFormat(), x)
 			}
 			return nil
 		},
@@ -79,7 +79,7 @@ func newItemMetaDataUploadCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			printItemMetaData(*itemMetaData)
+			printItemMetaData(getOutputFormat(), *itemMetaData)
 			return nil
 		},
 	}
@@ -111,7 +111,7 @@ func newItemMetaDataDeleteCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println(idInt)
+			utils.PrintId(getOutputFormat(), idInt)
 			return nil
 		},
 	}
@@ -154,9 +154,19 @@ func newItemMetaDataDownloadCmd() *cobra.Command {
 	return cmd
 }
 
-func printItemMetaData(x openapi.ItemMetaData) {
-	fmt.Println(x.Id,
-		utils.Atoa(x.Basename),
-		x.Filesize,
-		utils.FormatTime(x.InsDatetime))
+func printItemMetaData(format string, x openapi.ItemMetaData) {
+	if format == "json" || format == "yaml" {
+		m := map[string]any{
+			"id":           x.Id,
+			"basename":     utils.Atoa(x.Basename),
+			"filesize":     x.Filesize,
+			"ins_datetime": utils.FormatTime(x.InsDatetime),
+		}
+		utils.PrintOutput(format, m)
+	} else {
+		fmt.Println(x.Id,
+			utils.Atoa(x.Basename),
+			x.Filesize,
+			utils.FormatTime(x.InsDatetime))
+	}
 }

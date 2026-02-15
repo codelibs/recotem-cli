@@ -45,7 +45,7 @@ func newSplitConfigListCmd() *cobra.Command {
 				return err
 			}
 			for _, x := range *configs {
-				printSplitConfig(x)
+				printSplitConfig(getOutputFormat(), x)
 			}
 			return nil
 		},
@@ -80,7 +80,7 @@ func newSplitConfigCreateCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			printSplitConfig(*sc)
+			printSplitConfig(getOutputFormat(), *sc)
 			return nil
 		},
 	}
@@ -115,7 +115,7 @@ func newSplitConfigDeleteCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println(idInt)
+			utils.PrintId(getOutputFormat(), idInt)
 			return nil
 		},
 	}
@@ -152,7 +152,7 @@ func newSplitConfigUpdateCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			printSplitConfig(*sc)
+			printSplitConfig(getOutputFormat(), *sc)
 			return nil
 		},
 	}
@@ -170,9 +170,19 @@ func newSplitConfigUpdateCmd() *cobra.Command {
 	return cmd
 }
 
-func printSplitConfig(x openapi.SplitConfig) {
-	fmt.Println(x.Id,
-		utils.Ftoa(x.HeldoutRatio),
-		utils.Ftoa(x.TestUserRatio),
-		utils.Itoa(x.RandomSeed))
+func printSplitConfig(format string, x openapi.SplitConfig) {
+	if format == "json" || format == "yaml" {
+		m := map[string]any{
+			"id":              x.Id,
+			"heldout_ratio":   utils.Ftoa(x.HeldoutRatio),
+			"test_user_ratio": utils.Ftoa(x.TestUserRatio),
+			"random_seed":     utils.Itoa(x.RandomSeed),
+		}
+		utils.PrintOutput(format, m)
+	} else {
+		fmt.Println(x.Id,
+			utils.Ftoa(x.HeldoutRatio),
+			utils.Ftoa(x.TestUserRatio),
+			utils.Itoa(x.RandomSeed))
+	}
 }

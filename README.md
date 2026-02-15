@@ -44,7 +44,7 @@ Or install directly to your `$GOPATH/bin`:
 make install
 ```
 
-**Requires:** Go 1.24 or later.
+**Requires:** Go 1.25 or later.
 
 ## Quick Start
 
@@ -170,7 +170,7 @@ The configuration file is located at `~/.recotem/config.yaml`.
 
 ### Requirements
 
-- Go 1.24 or later
+- Go 1.25 or later
 - [oapi-codegen](https://github.com/oapi-codegen/oapi-codegen) v2 (for code generation)
 - [golangci-lint](https://golangci-lint.run/) (for linting)
 
@@ -206,7 +206,7 @@ recotem-cli/
 │   ├── cmd/                # CLI commands (cobra)
 │   ├── openapi/            # OpenAPI schema and generated client
 │   └── utils/              # Output formatting, string helpers
-├── .github/workflows/      # CI/CD (test on Go 1.24/1.25, lint, build)
+├── .github/workflows/      # CI/CD (test on Go 1.25, lint, build)
 └── .golangci.yml           # Linter configuration
 ```
 

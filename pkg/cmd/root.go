@@ -61,7 +61,11 @@ func newClientFromCmd(cmd *cobra.Command) (api.Client, error) {
 		config.ApiKey = apiKeyFlag
 	}
 
-	return api.NewClient(cmd.Context(), config), nil
+	client := api.NewClient(cmd.Context(), config)
+	if err := client.EnsureValidToken(); err != nil {
+		return api.Client{}, err
+	}
+	return client, nil
 }
 
 func getOutputFormat() string {
