@@ -77,3 +77,32 @@ func (c Client) GetSplitConfigs(id *int, name *string, unnamed *bool) (*[]openap
 
 	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
+
+func (c Client) UpdateSplitConfig(id int, name *string, scheme *openapi.SchemeEnum,
+	heldoutRatio *float32, nHeldout *int, testUserRatio *float32, nTestUsers *int,
+	randomSeed *int) (*openapi.SplitConfig, error) {
+	client, err := c.newApiClient()
+	if err != nil {
+		return nil, err
+	}
+
+	req := openapi.SplitConfigUpdateJSONRequestBody{
+		Name:          name,
+		Scheme:        scheme,
+		HeldoutRatio:  heldoutRatio,
+		NHeldout:      nHeldout,
+		TestUserRatio: testUserRatio,
+		NTestUsers:    nTestUsers,
+		RandomSeed:    randomSeed,
+	}
+	resp, err := client.SplitConfigUpdateWithResponse(c.Context, id, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.JSON200 != nil {
+		return resp.JSON200, nil
+	}
+
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
+}

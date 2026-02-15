@@ -119,9 +119,9 @@ func TestNilOrScheme(t *testing.T) {
 		expected *openapi.SchemeEnum
 	}{
 		{"empty string", "", nil},
-		{"RG", "RG", schemePtr(openapi.SchemeEnumRG)},
-		{"TG", "TG", schemePtr(openapi.SchemeEnumTG)},
-		{"TU", "TU", schemePtr(openapi.SchemeEnumTU)},
+		{"RG", "RG", schemePtr(openapi.RG)},
+		{"TG", "TG", schemePtr(openapi.TG)},
+		{"TU", "TU", schemePtr(openapi.TU)},
 		{"invalid scheme", "INVALID", nil},
 		{"lowercase rg", "rg", nil},
 	}
@@ -146,10 +146,10 @@ func TestNilOrTargetMetric(t *testing.T) {
 		expected *openapi.TargetMetricEnum
 	}{
 		{"empty string", "", nil},
-		{"hit", "hit", targetMetricPtr(openapi.TargetMetricEnumHit)},
-		{"map", "map", targetMetricPtr(openapi.TargetMetricEnumMap)},
-		{"recall", "recall", targetMetricPtr(openapi.TargetMetricEnumRecall)},
-		{"ndcg", "ndcg", targetMetricPtr(openapi.TargetMetricEnumNdcg)},
+		{"hit", "hit", targetMetricPtr(openapi.Hit)},
+		{"map", "map", targetMetricPtr(openapi.Map)},
+		{"recall", "recall", targetMetricPtr(openapi.Recall)},
+		{"ndcg", "ndcg", targetMetricPtr(openapi.Ndcg)},
 		{"invalid metric", "INVALID", nil},
 		{"uppercase HIT", "HIT", nil},
 	}

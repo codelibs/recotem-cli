@@ -3,31 +3,21 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/urfave/cli/v2"
+	"github.com/spf13/cobra"
 	"recotem.org/cli/recotem/pkg/api"
 	"recotem.org/cli/recotem/pkg/cfg"
 	"recotem.org/cli/recotem/pkg/utils"
 )
 
-func LoginCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:    "login",
-		Aliases: []string{},
-		Usage:   "get an access token",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "username",
-				Aliases: []string{"u"},
-				Usage:   "Username",
-			},
-			&cli.StringFlag{
-				Name:    "password",
-				Aliases: []string{"p"},
-				Usage:   "Password",
-			},
-		},
-		Action: func(c *cli.Context) error {
-			username, password, err := utils.Credentials(c.String("username"), c.String("password"))
+func newLoginCmd() *cobra.Command {
+	var username, password string
+
+	cmd := &cobra.Command{
+		Use:   "login",
+		Short: "Authenticate with the recotem server",
+		Long:  "Login to the recotem server using username and password to obtain JWT tokens.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			u, p, err := utils.Credentials(username, password)
 			if err != nil {
 				return err
 			}
@@ -35,19 +25,26 @@ func LoginCommand() *cli.Command {
 			if err != nil {
 				return err
 			}
-			client := api.NewClient(c.Context, config)
-			token, err := client.GetToken(username, password)
+			client := api.NewClient(cmd.Context(), config)
+			result, err := client.Login(u, p)
 			if err != nil {
 				return err
 			}
-			config.Token = token.Token
+			config.AccessToken = result.AccessToken
+			config.RefreshToken = result.RefreshToken
+			config.ExpiresAt = &result.ExpiresAt
+			config.Token = "" // Clear legacy token
 			err = cfg.SaveRecotemConfig(config)
 			if err != nil {
 				return err
 			}
-			fmt.Println("Updated your token.")
+			fmt.Println("Login successful.")
 			return nil
 		},
 	}
-	return &cmd
+
+	cmd.Flags().StringVarP(&username, "username", "u", "", "Username")
+	cmd.Flags().StringVarP(&password, "password", "p", "", "Password")
+
+	return cmd
 }

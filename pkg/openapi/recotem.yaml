@@ -1,21 +1,24 @@
 openapi: 3.0.3
 info:
-  title: ''
-  version: 0.0.0
+  title: Recotem API
+  version: 2.0.0
+  description: Recotem v2 recommendation system API
+security:
+  - bearerAuth: []
+  - apiKeyAuth: []
 paths:
-  /api/auth/login/:
+  # =========================================================================
+  # Auth
+  # =========================================================================
+  /api/v1/auth/login/:
     post:
-      operationId: auth_login_create
+      operationId: auth_login
       description: |-
-        Check the credentials and return the REST Token
-        if the credentials are valid and authenticated.
-        Calls Django Auth login method to register User ID
-        in Django session framework
-
+        Check the credentials and return JWT tokens if the credentials are valid.
         Accept the following POST parameters: username, password
-        Return the REST Framework Token Object's key.
+        Return access and refresh tokens.
       tags:
-      - auth
+        - auth
       requestBody:
         content:
           application/json:
@@ -28,10 +31,7 @@ paths:
             schema:
               $ref: '#/components/schemas/Login'
         required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      - {}
+      security: []
       responses:
         '200':
           content:
@@ -39,135 +39,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/JWT'
           description: ''
-  /api/auth/logout/:
+  /api/v1/auth/token/refresh/:
     post:
-      operationId: auth_logout_create
-      description: |-
-        Calls Django logout method and delete the Token object
-        assigned to the current User object.
-
-        Accepts/Returns nothing.
-      tags:
-      - auth
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RestAuthDetail'
-          description: ''
-  /api/auth/password/change/:
-    post:
-      operationId: auth_password_change_create
-      description: |-
-        Calls Django Auth SetPasswordForm save method.
-
-        Accepts the following POST parameters: new_password1, new_password2
-        Returns the success/fail message.
-      tags:
-      - auth
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PasswordChange'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PasswordChange'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PasswordChange'
-        required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RestAuthDetail'
-          description: ''
-  /api/auth/password/reset/:
-    post:
-      operationId: auth_password_reset_create
-      description: |-
-        Calls Django Auth PasswordResetForm save method.
-
-        Accepts the following POST parameters: email
-        Returns the success/fail message.
-      tags:
-      - auth
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PasswordReset'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PasswordReset'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PasswordReset'
-        required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RestAuthDetail'
-          description: ''
-  /api/auth/password/reset/confirm/:
-    post:
-      operationId: auth_password_reset_confirm_create
-      description: |-
-        Password reset e-mail link is confirmed, therefore
-        this resets the user's password.
-
-        Accepts the following POST parameters: token, uid,
-            new_password1, new_password2
-        Returns the success/fail message.
-      tags:
-      - auth
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PasswordResetConfirm'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PasswordResetConfirm'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PasswordResetConfirm'
-        required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RestAuthDetail'
-          description: ''
-  /api/auth/token/refresh/:
-    post:
-      operationId: auth_token_refresh_create
+      operationId: auth_token_refresh
       description: |-
         Takes a refresh type JSON web token and returns an access type JSON web
         token if the refresh token is valid.
       tags:
-      - auth
+        - auth
       requestBody:
         content:
           application/json:
@@ -180,6 +59,7 @@ paths:
             schema:
               $ref: '#/components/schemas/TokenRefresh'
         required: true
+      security: []
       responses:
         '200':
           content:
@@ -187,14 +67,34 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenRefresh'
           description: ''
-  /api/auth/token/verify/:
+  /api/v1/auth/token/blacklist/:
     post:
-      operationId: auth_token_verify_create
+      operationId: auth_token_blacklist
+      description: Blacklists a refresh token so it can no longer be used.
+      tags:
+        - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh:
+                  type: string
+              required:
+                - refresh
+        required: true
+      responses:
+        '200':
+          description: Token blacklisted successfully.
+  /api/v1/auth/token/verify/:
+    post:
+      operationId: auth_token_verify
       description: |-
         Takes a token and indicates if it is valid.  This view provides no
         information about a token's fitness for a particular use.
       tags:
-      - auth
+        - auth
       requestBody:
         content:
           application/json:
@@ -214,23 +114,121 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenVerify'
           description: ''
-  /api/auth/user/:
+  /api/v1/auth/logout/:
+    post:
+      operationId: auth_logout
+      description: |-
+        Logs out the current user and invalidates tokens.
+        Accepts/Returns nothing.
+      tags:
+        - auth
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestAuthDetail'
+          description: ''
+  /api/v1/auth/password/change/:
+    post:
+      operationId: auth_password_change
+      description: |-
+        Calls Django Auth SetPasswordForm save method.
+        Accepts the following POST parameters: new_password1, new_password2
+        Returns the success/fail message.
+      tags:
+        - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChange'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PasswordChange'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PasswordChange'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestAuthDetail'
+          description: ''
+  /api/v1/auth/password/reset/:
+    post:
+      operationId: auth_password_reset
+      description: |-
+        Calls Django Auth PasswordResetForm save method.
+        Accepts the following POST parameters: email
+        Returns the success/fail message.
+      tags:
+        - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordReset'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PasswordReset'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PasswordReset'
+        required: true
+      security: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestAuthDetail'
+          description: ''
+  /api/v1/auth/password/reset/confirm/:
+    post:
+      operationId: auth_password_reset_confirm
+      description: |-
+        Password reset e-mail link is confirmed, therefore
+        this resets the user's password.
+        Accepts the following POST parameters: token, uid,
+            new_password1, new_password2
+        Returns the success/fail message.
+      tags:
+        - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirm'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirm'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirm'
+        required: true
+      security: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestAuthDetail'
+          description: ''
+  /api/v1/auth/user/:
     get:
       operationId: auth_user_retrieve
       description: |-
         Reads and updates UserModel fields
         Accepts GET, PUT, PATCH methods.
-
         Default accepted fields: username, first_name, last_name
         Default display fields: pk, username, email, first_name, last_name
         Read-only fields: pk, email
-
         Returns UserModel fields.
       tags:
-      - auth
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
+        - auth
       responses:
         '200':
           content:
@@ -243,14 +241,12 @@ paths:
       description: |-
         Reads and updates UserModel fields
         Accepts GET, PUT, PATCH methods.
-
         Default accepted fields: username, first_name, last_name
         Default display fields: pk, username, email, first_name, last_name
         Read-only fields: pk, email
-
         Returns UserModel fields.
       tags:
-      - auth
+        - auth
       requestBody:
         content:
           application/json:
@@ -263,9 +259,6 @@ paths:
             schema:
               $ref: '#/components/schemas/UserDetails'
         required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -278,14 +271,12 @@ paths:
       description: |-
         Reads and updates UserModel fields
         Accepts GET, PUT, PATCH methods.
-
         Default accepted fields: username, first_name, last_name
         Default display fields: pk, username, email, first_name, last_name
         Read-only fields: pk, email
-
         Returns UserModel fields.
       tags:
-      - auth
+        - auth
       requestBody:
         content:
           application/json:
@@ -297,9 +288,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/PatchedUserDetails'
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -307,732 +295,56 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserDetails'
           description: ''
-  /api/evaluation_config/:
+  # =========================================================================
+  # Ping (Health Check)
+  # =========================================================================
+  /api/v1/ping/:
     get:
-      operationId: evaluation_config_list
-      description: ''
-      parameters:
-      - in: query
-        name: id
-        schema:
-          type: integer
-      - in: query
-        name: name
-        schema:
-          type: string
-      - in: query
-        name: unnamed
-        schema:
-          type: boolean
+      operationId: ping
+      description: Health check endpoint. Returns status ok.
       tags:
-      - evaluation_config
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
+        - ping
+      security: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EvaluationConfig'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - ok
           description: ''
-    post:
-      operationId: evaluation_config_create
-      description: ''
-      tags:
-      - evaluation_config
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EvaluationConfig'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/EvaluationConfig'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/EvaluationConfig'
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EvaluationConfig'
-          description: ''
-  /api/evaluation_config/{id}/:
-    get:
-      operationId: evaluation_config_retrieve
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this evaluation config.
-        required: true
-      tags:
-      - evaluation_config
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EvaluationConfig'
-          description: ''
-    put:
-      operationId: evaluation_config_update
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this evaluation config.
-        required: true
-      tags:
-      - evaluation_config
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EvaluationConfig'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/EvaluationConfig'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/EvaluationConfig'
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EvaluationConfig'
-          description: ''
-    patch:
-      operationId: evaluation_config_partial_update
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this evaluation config.
-        required: true
-      tags:
-      - evaluation_config
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedEvaluationConfig'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedEvaluationConfig'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedEvaluationConfig'
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EvaluationConfig'
-          description: ''
-    delete:
-      operationId: evaluation_config_destroy
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this evaluation config.
-        required: true
-      tags:
-      - evaluation_config
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '204':
-          description: No response body
-  /api/item_meta_data/:
-    get:
-      operationId: item_meta_data_list
-      description: ''
-      parameters:
-      - in: query
-        name: id
-        schema:
-          type: integer
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: page_size
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      - in: query
-        name: project
-        schema:
-          type: integer
-      tags:
-      - item_meta_data
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedItemMetaDataList'
-          description: ''
-    post:
-      operationId: item_meta_data_create
-      description: ''
-      tags:
-      - item_meta_data
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ItemMetaData'
-        required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ItemMetaData'
-          description: ''
-  /api/item_meta_data/{id}/:
-    get:
-      operationId: item_meta_data_retrieve
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this item meta data.
-        required: true
-      tags:
-      - item_meta_data
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ItemMetaData'
-          description: ''
-    put:
-      operationId: item_meta_data_update
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this item meta data.
-        required: true
-      tags:
-      - item_meta_data
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ItemMetaData'
-        required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ItemMetaData'
-          description: ''
-    patch:
-      operationId: item_meta_data_partial_update
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this item meta data.
-        required: true
-      tags:
-      - item_meta_data
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedItemMetaData'
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ItemMetaData'
-          description: ''
-    delete:
-      operationId: item_meta_data_destroy
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this item meta data.
-        required: true
-      tags:
-      - item_meta_data
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '204':
-          description: No response body
-  /api/item_meta_data/{id}/download_file/:
-    get:
-      operationId: item_meta_data_download_file_retrieve
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this item meta data.
-        required: true
-      tags:
-      - item_meta_data
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ItemMetaData'
-          description: ''
-  /api/item_meta_data/{id}/unlink_file/:
-    delete:
-      operationId: item_meta_data_unlink_file_destroy
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this item meta data.
-        required: true
-      tags:
-      - item_meta_data
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '204':
-          description: No response body
-  /api/model_configuration/:
-    get:
-      operationId: model_configuration_list
-      description: ''
-      parameters:
-      - in: query
-        name: id
-        schema:
-          type: integer
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: page_size
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      - in: query
-        name: project
-        schema:
-          type: integer
-      tags:
-      - model_configuration
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedModelConfigurationList'
-          description: ''
-    post:
-      operationId: model_configuration_create
-      description: ''
-      tags:
-      - model_configuration
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ModelConfiguration'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ModelConfiguration'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ModelConfiguration'
-        required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ModelConfiguration'
-          description: ''
-  /api/model_configuration/{id}/:
-    get:
-      operationId: model_configuration_retrieve
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this model configuration.
-        required: true
-      tags:
-      - model_configuration
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ModelConfiguration'
-          description: ''
-    put:
-      operationId: model_configuration_update
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this model configuration.
-        required: true
-      tags:
-      - model_configuration
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ModelConfiguration'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ModelConfiguration'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ModelConfiguration'
-        required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ModelConfiguration'
-          description: ''
-    patch:
-      operationId: model_configuration_partial_update
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this model configuration.
-        required: true
-      tags:
-      - model_configuration
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedModelConfiguration'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedModelConfiguration'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedModelConfiguration'
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ModelConfiguration'
-          description: ''
-    delete:
-      operationId: model_configuration_destroy
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this model configuration.
-        required: true
-      tags:
-      - model_configuration
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '204':
-          description: No response body
-  /api/parameter_tuning_job/:
-    get:
-      operationId: parameter_tuning_job_list
-      description: ''
-      parameters:
-      - in: query
-        name: data
-        schema:
-          type: integer
-      - in: query
-        name: data__project
-        schema:
-          type: integer
-      - in: query
-        name: id
-        schema:
-          type: integer
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: page_size
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      tags:
-      - parameter_tuning_job
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedParameterTuningJobList'
-          description: ''
-    post:
-      operationId: parameter_tuning_job_create
-      description: ''
-      tags:
-      - parameter_tuning_job
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ParameterTuningJob'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ParameterTuningJob'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ParameterTuningJob'
-        required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ParameterTuningJob'
-          description: ''
-  /api/parameter_tuning_job/{id}/:
-    get:
-      operationId: parameter_tuning_job_retrieve
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this parameter tuning job.
-        required: true
-      tags:
-      - parameter_tuning_job
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ParameterTuningJob'
-          description: ''
-    put:
-      operationId: parameter_tuning_job_update
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this parameter tuning job.
-        required: true
-      tags:
-      - parameter_tuning_job
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ParameterTuningJob'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ParameterTuningJob'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ParameterTuningJob'
-        required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ParameterTuningJob'
-          description: ''
-    patch:
-      operationId: parameter_tuning_job_partial_update
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this parameter tuning job.
-        required: true
-      tags:
-      - parameter_tuning_job
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedParameterTuningJob'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedParameterTuningJob'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedParameterTuningJob'
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ParameterTuningJob'
-          description: ''
-    delete:
-      operationId: parameter_tuning_job_destroy
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this parameter tuning job.
-        required: true
-      tags:
-      - parameter_tuning_job
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '204':
-          description: No response body
-  /api/project/:
+  # =========================================================================
+  # Project
+  # =========================================================================
+  /api/v1/project/:
     get:
       operationId: project_list
       description: ''
       parameters:
-      - in: query
-        name: id
-        schema:
-          type: integer
-      - in: query
-        name: name
-        schema:
-          type: string
+        - in: query
+          name: id
+          schema:
+            type: integer
+        - in: query
+          name: name
+          schema:
+            type: string
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: page_size
+          required: false
+          schema:
+            type: integer
       tags:
-      - project
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
+        - project
       responses:
         '200':
           content:
@@ -1046,7 +358,7 @@ paths:
       operationId: project_create
       description: ''
       tags:
-      - project
+        - project
       requestBody:
         content:
           application/json:
@@ -1059,9 +371,6 @@ paths:
             schema:
               $ref: '#/components/schemas/Project'
         required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
       responses:
         '201':
           content:
@@ -1069,56 +378,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/Project'
           description: ''
-  /api/project/{id}/:
+  /api/v1/project/{id}/:
     get:
       operationId: project_retrieve
       description: ''
       parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this project.
-        required: true
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this project.
+          required: true
       tags:
-      - project
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Project'
-          description: ''
-    put:
-      operationId: project_update
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this project.
-        required: true
-      tags:
-      - project
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Project'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Project'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Project'
-        required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
+        - project
       responses:
         '200':
           content:
@@ -1127,17 +399,17 @@ paths:
                 $ref: '#/components/schemas/Project'
           description: ''
     patch:
-      operationId: project_partial_update
+      operationId: project_update
       description: ''
       parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this project.
-        required: true
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this project.
+          required: true
       tags:
-      - project
+        - project
       requestBody:
         content:
           application/json:
@@ -1149,9 +421,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/PatchedProject'
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1163,203 +432,840 @@ paths:
       operationId: project_destroy
       description: ''
       parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this project.
-        required: true
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this project.
+          required: true
       tags:
-      - project
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
+        - project
       responses:
         '204':
           description: No response body
-  /api/project_summary/{id}/:
+  /api/v1/project/{id}/summary/:
     get:
-      operationId: project_summary_retrieve
-      description: ''
+      operationId: project_summary
+      description: Get a summary of the project.
       parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
       tags:
-      - project_summary
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
+        - project
       responses:
         '200':
-          description: No response body
-  /api/schema/:
-    get:
-      operationId: schema_retrieve
-      description: |-
-        OpenApi3 schema for this API. Format can be selected via content negotiation.
-
-        - YAML: application/vnd.oai.openapi
-        - JSON: application/vnd.oai.openapi+json
-      parameters:
-      - in: query
-        name: format
-        schema:
-          type: string
-          enum:
-          - json
-          - yaml
-      - in: query
-        name: lang
-        schema:
-          type: string
-          enum:
-          - af
-          - ar
-          - ar-dz
-          - ast
-          - az
-          - be
-          - bg
-          - bn
-          - br
-          - bs
-          - ca
-          - cs
-          - cy
-          - da
-          - de
-          - dsb
-          - el
-          - en
-          - en-au
-          - en-gb
-          - eo
-          - es
-          - es-ar
-          - es-co
-          - es-mx
-          - es-ni
-          - es-ve
-          - et
-          - eu
-          - fa
-          - fi
-          - fr
-          - fy
-          - ga
-          - gd
-          - gl
-          - he
-          - hi
-          - hr
-          - hsb
-          - hu
-          - hy
-          - ia
-          - id
-          - ig
-          - io
-          - is
-          - it
-          - ja
-          - ka
-          - kab
-          - kk
-          - km
-          - kn
-          - ko
-          - ky
-          - lb
-          - lt
-          - lv
-          - mk
-          - ml
-          - mn
-          - mr
-          - my
-          - nb
-          - ne
-          - nl
-          - nn
-          - os
-          - pa
-          - pl
-          - pt
-          - pt-br
-          - ro
-          - ru
-          - sk
-          - sl
-          - sq
-          - sr
-          - sr-latn
-          - sv
-          - sw
-          - ta
-          - te
-          - tg
-          - th
-          - tk
-          - tr
-          - tt
-          - udm
-          - uk
-          - ur
-          - uz
-          - vi
-          - zh-hans
-          - zh-hant
-      tags:
-      - schema
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      - {}
-      responses:
-        '200':
+          description: Project summary.
           content:
-            application/vnd.oai.openapi:
-              schema:
-                type: object
-                additionalProperties: {}
-            application/yaml:
-              schema:
-                type: object
-                additionalProperties: {}
-            application/vnd.oai.openapi+json:
-              schema:
-                type: object
-                additionalProperties: {}
             application/json:
               schema:
                 type: object
                 additionalProperties: {}
+  # =========================================================================
+  # Training Data
+  # =========================================================================
+  /api/v1/training-data/:
+    get:
+      operationId: training_data_list
+      description: ''
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: integer
+        - name: page
+          required: false
+          in: query
+          description: A page number within the paginated result set.
+          schema:
+            type: integer
+        - name: page_size
+          required: false
+          in: query
+          description: Number of results to return per page.
+          schema:
+            type: integer
+        - in: query
+          name: project
+          schema:
+            type: integer
+      tags:
+        - training_data
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTrainingDataList'
           description: ''
-  /api/split_config/:
+    post:
+      operationId: training_data_create
+      description: ''
+      tags:
+        - training_data
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TrainingData'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingData'
+          description: ''
+  /api/v1/training-data/{id}/:
+    get:
+      operationId: training_data_retrieve
+      description: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this training data.
+          required: true
+      tags:
+        - training_data
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingData'
+          description: ''
+    delete:
+      operationId: training_data_destroy
+      description: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this training data.
+          required: true
+      tags:
+        - training_data
+      responses:
+        '204':
+          description: No response body
+  /api/v1/training-data/{id}/download/:
+    get:
+      operationId: training_data_download
+      description: Download the training data file.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this training data.
+          required: true
+      tags:
+        - training_data
+      responses:
+        '200':
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  /api/v1/training-data/{id}/preview/:
+    get:
+      operationId: training_data_preview
+      description: Returns a JSON preview of the first N rows of the training data.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this training data.
+          required: true
+        - in: query
+          name: n_rows
+          schema:
+            type: integer
+            default: 10
+          description: Number of rows to preview.
+      tags:
+        - training_data
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  columns:
+                    type: array
+                    items:
+                      type: string
+                  rows:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: {}
+                  total_rows:
+                    type: integer
+          description: ''
+  # =========================================================================
+  # Item Meta Data
+  # =========================================================================
+  /api/v1/item-meta-data/:
+    get:
+      operationId: item_meta_data_list
+      description: ''
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: integer
+        - name: page
+          required: false
+          in: query
+          description: A page number within the paginated result set.
+          schema:
+            type: integer
+        - name: page_size
+          required: false
+          in: query
+          description: Number of results to return per page.
+          schema:
+            type: integer
+        - in: query
+          name: project
+          schema:
+            type: integer
+      tags:
+        - item_meta_data
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedItemMetaDataList'
+          description: ''
+    post:
+      operationId: item_meta_data_create
+      description: ''
+      tags:
+        - item_meta_data
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ItemMetaData'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemMetaData'
+          description: ''
+  /api/v1/item-meta-data/{id}/:
+    get:
+      operationId: item_meta_data_retrieve
+      description: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this item meta data.
+          required: true
+      tags:
+        - item_meta_data
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemMetaData'
+          description: ''
+    delete:
+      operationId: item_meta_data_destroy
+      description: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this item meta data.
+          required: true
+      tags:
+        - item_meta_data
+      responses:
+        '204':
+          description: No response body
+  /api/v1/item-meta-data/{id}/download/:
+    get:
+      operationId: item_meta_data_download
+      description: Download the item meta data file.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this item meta data.
+          required: true
+      tags:
+        - item_meta_data
+      responses:
+        '200':
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  # =========================================================================
+  # Trained Model
+  # =========================================================================
+  /api/v1/trained-model/:
+    get:
+      operationId: trained_model_list
+      description: ''
+      parameters:
+        - in: query
+          name: data_loc
+          schema:
+            type: integer
+        - in: query
+          name: data_loc__project
+          schema:
+            type: integer
+        - in: query
+          name: id
+          schema:
+            type: integer
+        - name: page
+          required: false
+          in: query
+          description: A page number within the paginated result set.
+          schema:
+            type: integer
+        - name: page_size
+          required: false
+          in: query
+          description: Number of results to return per page.
+          schema:
+            type: integer
+      tags:
+        - trained_model
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTrainedModelList'
+          description: ''
+    post:
+      operationId: trained_model_create
+      description: ''
+      tags:
+        - trained_model
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainedModel'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TrainedModel'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TrainedModel'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainedModel'
+          description: ''
+  /api/v1/trained-model/{id}/:
+    get:
+      operationId: trained_model_retrieve
+      description: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this trained model.
+          required: true
+      tags:
+        - trained_model
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainedModel'
+          description: ''
+    delete:
+      operationId: trained_model_destroy
+      description: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this trained model.
+          required: true
+      tags:
+        - trained_model
+      responses:
+        '204':
+          description: No response body
+  /api/v1/trained-model/{id}/download-file/:
+    get:
+      operationId: trained_model_download_file
+      description: Download the trained model file.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this trained model.
+          required: true
+      tags:
+        - trained_model
+      responses:
+        '200':
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  /api/v1/trained-model/{id}/recommend/:
+    post:
+      operationId: trained_model_recommend
+      description: Get recommendations for a specific user from this trained model.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this trained model.
+          required: true
+      tags:
+        - trained_model
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                n_items:
+                  type: integer
+              required:
+                - user_id
+                - n_items
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RawRecommendation'
+          description: ''
+  /api/v1/trained-model/{id}/sample-recommend/:
+    post:
+      operationId: trained_model_sample_recommend
+      description: Get sample recommendations from this trained model.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this trained model.
+          required: true
+      tags:
+        - trained_model
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RawRecommendation'
+          description: ''
+  /api/v1/trained-model/{id}/recommend-profile/:
+    post:
+      operationId: trained_model_recommend_profile
+      description: Get recommendations based on item profile (item-to-item).
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this trained model.
+          required: true
+      tags:
+        - trained_model
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                item_ids:
+                  type: array
+                  items:
+                    type: string
+                n_items:
+                  type: integer
+              required:
+                - item_ids
+                - n_items
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RawRecommendation'
+          description: ''
+  /api/v1/trained-model/{id}/sample-recommendation-raw/:
+    get:
+      operationId: trained_model_sample_recommendation_raw_retrieve
+      description: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this trained model.
+          required: true
+      tags:
+        - trained_model
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RawRecommendation'
+          description: ''
+  /api/v1/trained-model/{id}/sample-recommendation-metadata/{metadata_id}/:
+    get:
+      operationId: trained_model_sample_recommendation_metadata_retrieve
+      description: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this trained model.
+          required: true
+        - in: path
+          name: metadata_id
+          schema:
+            type: string
+          required: true
+      tags:
+        - trained_model
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationWithMetaData'
+          description: ''
+  # =========================================================================
+  # Model Configuration
+  # =========================================================================
+  /api/v1/model-configuration/:
+    get:
+      operationId: model_configuration_list
+      description: ''
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: integer
+        - name: page
+          required: false
+          in: query
+          description: A page number within the paginated result set.
+          schema:
+            type: integer
+        - name: page_size
+          required: false
+          in: query
+          description: Number of results to return per page.
+          schema:
+            type: integer
+        - in: query
+          name: project
+          schema:
+            type: integer
+      tags:
+        - model_configuration
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedModelConfigurationList'
+          description: ''
+    post:
+      operationId: model_configuration_create
+      description: ''
+      tags:
+        - model_configuration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModelConfiguration'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ModelConfiguration'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ModelConfiguration'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelConfiguration'
+          description: ''
+  /api/v1/model-configuration/{id}/:
+    get:
+      operationId: model_configuration_retrieve
+      description: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this model configuration.
+          required: true
+      tags:
+        - model_configuration
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelConfiguration'
+          description: ''
+    patch:
+      operationId: model_configuration_update
+      description: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this model configuration.
+          required: true
+      tags:
+        - model_configuration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedModelConfiguration'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedModelConfiguration'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedModelConfiguration'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelConfiguration'
+          description: ''
+    delete:
+      operationId: model_configuration_destroy
+      description: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this model configuration.
+          required: true
+      tags:
+        - model_configuration
+      responses:
+        '204':
+          description: No response body
+  # =========================================================================
+  # Evaluation Config
+  # =========================================================================
+  /api/v1/evaluation-config/:
+    get:
+      operationId: evaluation_config_list
+      description: ''
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: integer
+        - in: query
+          name: name
+          schema:
+            type: string
+        - in: query
+          name: unnamed
+          schema:
+            type: boolean
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: page_size
+          required: false
+          schema:
+            type: integer
+      tags:
+        - evaluation_config
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EvaluationConfig'
+          description: ''
+    post:
+      operationId: evaluation_config_create
+      description: ''
+      tags:
+        - evaluation_config
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvaluationConfig'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EvaluationConfig'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EvaluationConfig'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationConfig'
+          description: ''
+  /api/v1/evaluation-config/{id}/:
+    get:
+      operationId: evaluation_config_retrieve
+      description: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this evaluation config.
+          required: true
+      tags:
+        - evaluation_config
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationConfig'
+          description: ''
+    patch:
+      operationId: evaluation_config_update
+      description: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this evaluation config.
+          required: true
+      tags:
+        - evaluation_config
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedEvaluationConfig'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedEvaluationConfig'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedEvaluationConfig'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationConfig'
+          description: ''
+    delete:
+      operationId: evaluation_config_destroy
+      description: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this evaluation config.
+          required: true
+      tags:
+        - evaluation_config
+      responses:
+        '204':
+          description: No response body
+  # =========================================================================
+  # Split Config
+  # =========================================================================
+  /api/v1/split-config/:
     get:
       operationId: split_config_list
       description: ''
       parameters:
-      - in: query
-        name: id
-        schema:
-          type: integer
-      - in: query
-        name: name
-        schema:
-          type: string
-      - in: query
-        name: unnamed
-        schema:
-          type: boolean
+        - in: query
+          name: id
+          schema:
+            type: integer
+        - in: query
+          name: name
+          schema:
+            type: string
+        - in: query
+          name: unnamed
+          schema:
+            type: boolean
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: page_size
+          required: false
+          schema:
+            type: integer
       tags:
-      - split_config
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
+        - split_config
       responses:
         '200':
           content:
@@ -1373,7 +1279,7 @@ paths:
       operationId: split_config_create
       description: ''
       tags:
-      - split_config
+        - split_config
       requestBody:
         content:
           application/json:
@@ -1385,9 +1291,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/SplitConfig'
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
       responses:
         '201':
           content:
@@ -1395,55 +1298,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/SplitConfig'
           description: ''
-  /api/split_config/{id}/:
+  /api/v1/split-config/{id}/:
     get:
       operationId: split_config_retrieve
       description: ''
       parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this split config.
-        required: true
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this split config.
+          required: true
       tags:
-      - split_config
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SplitConfig'
-          description: ''
-    put:
-      operationId: split_config_update
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this split config.
-        required: true
-      tags:
-      - split_config
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SplitConfig'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/SplitConfig'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/SplitConfig'
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
+        - split_config
       responses:
         '200':
           content:
@@ -1452,17 +1319,17 @@ paths:
                 $ref: '#/components/schemas/SplitConfig'
           description: ''
     patch:
-      operationId: split_config_partial_update
+      operationId: split_config_update
       description: ''
       parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this split config.
-        required: true
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this split config.
+          required: true
       tags:
-      - split_config
+        - split_config
       requestBody:
         content:
           application/json:
@@ -1474,9 +1341,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/PatchedSplitConfig'
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1488,46 +1352,157 @@ paths:
       operationId: split_config_destroy
       description: ''
       parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this split config.
-        required: true
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this split config.
+          required: true
       tags:
-      - split_config
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
+        - split_config
       responses:
         '204':
           description: No response body
-  /api/task_log/:
+  # =========================================================================
+  # Parameter Tuning Job
+  # =========================================================================
+  /api/v1/parameter-tuning-job/:
+    get:
+      operationId: parameter_tuning_job_list
+      description: ''
+      parameters:
+        - in: query
+          name: data
+          schema:
+            type: integer
+        - in: query
+          name: data__project
+          schema:
+            type: integer
+        - in: query
+          name: id
+          schema:
+            type: integer
+        - name: page
+          required: false
+          in: query
+          description: A page number within the paginated result set.
+          schema:
+            type: integer
+        - name: page_size
+          required: false
+          in: query
+          description: Number of results to return per page.
+          schema:
+            type: integer
+      tags:
+        - parameter_tuning_job
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedParameterTuningJobList'
+          description: ''
+    post:
+      operationId: parameter_tuning_job_create
+      description: ''
+      tags:
+        - parameter_tuning_job
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParameterTuningJob'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ParameterTuningJob'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ParameterTuningJob'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParameterTuningJob'
+          description: ''
+  /api/v1/parameter-tuning-job/{id}/:
+    get:
+      operationId: parameter_tuning_job_retrieve
+      description: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this parameter tuning job.
+          required: true
+      tags:
+        - parameter_tuning_job
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParameterTuningJob'
+          description: ''
+    delete:
+      operationId: parameter_tuning_job_destroy
+      description: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this parameter tuning job.
+          required: true
+      tags:
+        - parameter_tuning_job
+      responses:
+        '204':
+          description: No response body
+  # =========================================================================
+  # Task Log
+  # =========================================================================
+  /api/v1/task-log/:
     get:
       operationId: task_log_list
       description: ''
       parameters:
-      - in: query
-        name: id
-        schema:
-          type: integer
-      - in: query
-        name: id_gt
-        schema:
-          type: integer
-      - in: query
-        name: model_id
-        schema:
-          type: integer
-      - in: query
-        name: tuning_job_id
-        schema:
-          type: integer
+        - in: query
+          name: id
+          schema:
+            type: integer
+        - in: query
+          name: id_gt
+          schema:
+            type: integer
+        - in: query
+          name: model_id
+          schema:
+            type: integer
+        - in: query
+          name: tuning_job_id
+          schema:
+            type: integer
+        - in: query
+          name: task
+          schema:
+            type: integer
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: page_size
+          required: false
+          schema:
+            type: integer
       tags:
-      - task_log
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
+        - task_log
       responses:
         '200':
           content:
@@ -1537,524 +1512,933 @@ paths:
                 items:
                   $ref: '#/components/schemas/TaskLog'
           description: ''
-  /api/task_log/{id}/:
+  # =========================================================================
+  # API Key
+  # =========================================================================
+  /api/v1/api-key/:
     get:
-      operationId: task_log_retrieve
-      description: ''
+      operationId: api_key_list
+      description: List API keys for the current user.
       parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this task log.
-        required: true
+        - in: query
+          name: id
+          schema:
+            type: integer
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: page_size
+          required: false
+          schema:
+            type: integer
       tags:
-      - task_log
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
+        - api_key
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskLog'
-          description: ''
-  /api/token/:
-    post:
-      operationId: token_create
-      description: ''
-      tags:
-      - token
-      requestBody:
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AuthToken'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AuthToken'
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AuthToken'
-        required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthToken'
-          description: ''
-  /api/trained_model/:
-    get:
-      operationId: trained_model_list
-      description: ''
-      parameters:
-      - in: query
-        name: data_loc
-        schema:
-          type: integer
-      - in: query
-        name: data_loc__project
-        schema:
-          type: integer
-      - in: query
-        name: id
-        schema:
-          type: integer
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: page_size
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      tags:
-      - trained_model
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedTrainedModelList'
+                $ref: '#/components/schemas/PaginatedApiKeyList'
           description: ''
     post:
-      operationId: trained_model_create
-      description: ''
+      operationId: api_key_create
+      description: Create a new API key.
       tags:
-      - trained_model
+        - api_key
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TrainedModel'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/TrainedModel'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/TrainedModel'
+              type: object
+              properties:
+                name:
+                  type: string
+                expires_at:
+                  type: string
+                  format: date-time
+                  nullable: true
+              required:
+                - name
         required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
       responses:
         '201':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TrainedModel'
+                $ref: '#/components/schemas/ApiKey'
           description: ''
-  /api/trained_model/{id}/:
+  /api/v1/api-key/{id}/:
     get:
-      operationId: trained_model_retrieve
-      description: ''
+      operationId: api_key_retrieve
+      description: Retrieve an API key.
       parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this trained model.
-        required: true
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
       tags:
-      - trained_model
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
+        - api_key
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TrainedModel'
-          description: ''
-    put:
-      operationId: trained_model_update
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this trained model.
-        required: true
-      tags:
-      - trained_model
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TrainedModel'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/TrainedModel'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/TrainedModel'
-        required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TrainedModel'
-          description: ''
-    patch:
-      operationId: trained_model_partial_update
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this trained model.
-        required: true
-      tags:
-      - trained_model
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedTrainedModel'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedTrainedModel'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedTrainedModel'
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TrainedModel'
+                $ref: '#/components/schemas/ApiKey'
           description: ''
     delete:
-      operationId: trained_model_destroy
-      description: ''
+      operationId: api_key_destroy
+      description: Delete an API key.
       parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this trained model.
-        required: true
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
       tags:
-      - trained_model
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
+        - api_key
       responses:
         '204':
           description: No response body
-  /api/trained_model/{id}/download_file/:
-    get:
-      operationId: trained_model_download_file_retrieve
-      description: ''
+  /api/v1/api-key/{id}/revoke/:
+    post:
+      operationId: api_key_revoke
+      description: Revoke an API key (deactivates it).
       parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this trained model.
-        required: true
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
       tags:
-      - trained_model
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
+        - api_key
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TrainedModel'
+                $ref: '#/components/schemas/ApiKey'
           description: ''
-  /api/trained_model/{id}/sample_recommendation_metadata/{metadata_id}/:
+  # =========================================================================
+  # Deployment Slot
+  # =========================================================================
+  /api/v1/deployment-slot/:
     get:
-      operationId: trained_model_sample_recommendation_metadata_retrieve
-      description: ''
+      operationId: deployment_slot_list
+      description: List deployment slots.
       parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this trained model.
-        required: true
-      - in: path
-        name: metadata_id
-        schema:
-          type: string
-        required: true
+        - in: query
+          name: id
+          schema:
+            type: integer
+        - in: query
+          name: project
+          schema:
+            type: integer
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: page_size
+          required: false
+          schema:
+            type: integer
       tags:
-      - trained_model
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
+        - deployment_slot
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RecommendationWithMetaData'
-          description: ''
-  /api/trained_model/{id}/sample_recommendation_raw/:
-    get:
-      operationId: trained_model_sample_recommendation_raw_retrieve
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this trained model.
-        required: true
-      tags:
-      - trained_model
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RawRecommendation'
-          description: ''
-  /api/trained_model/{id}/unlink_file/:
-    delete:
-      operationId: trained_model_unlink_file_destroy
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this trained model.
-        required: true
-      tags:
-      - trained_model
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '204':
-          description: No response body
-  /api/training_data/:
-    get:
-      operationId: training_data_list
-      description: ''
-      parameters:
-      - in: query
-        name: id
-        schema:
-          type: integer
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: page_size
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      - in: query
-        name: project
-        schema:
-          type: integer
-      tags:
-      - training_data
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedTrainingDataList'
+                $ref: '#/components/schemas/PaginatedDeploymentSlotList'
           description: ''
     post:
-      operationId: training_data_create
-      description: ''
+      operationId: deployment_slot_create
+      description: Create a deployment slot.
       tags:
-      - training_data
+        - deployment_slot
       requestBody:
         content:
-          multipart/form-data:
+          application/json:
             schema:
-              $ref: '#/components/schemas/TrainingData'
+              $ref: '#/components/schemas/DeploymentSlot'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DeploymentSlot'
         required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
       responses:
         '201':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TrainingData'
+                $ref: '#/components/schemas/DeploymentSlot'
           description: ''
-  /api/training_data/{id}/:
+  /api/v1/deployment-slot/{id}/:
     get:
-      operationId: training_data_retrieve
-      description: ''
+      operationId: deployment_slot_retrieve
+      description: Retrieve a deployment slot.
       parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this training data.
-        required: true
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
       tags:
-      - training_data
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
+        - deployment_slot
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TrainingData'
-          description: ''
-    put:
-      operationId: training_data_update
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this training data.
-        required: true
-      tags:
-      - training_data
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/TrainingData'
-        required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TrainingData'
+                $ref: '#/components/schemas/DeploymentSlot'
           description: ''
     patch:
-      operationId: training_data_partial_update
-      description: ''
+      operationId: deployment_slot_update
+      description: Update a deployment slot.
       parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this training data.
-        required: true
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
       tags:
-      - training_data
+        - deployment_slot
       requestBody:
         content:
-          multipart/form-data:
+          application/json:
             schema:
-              $ref: '#/components/schemas/PatchedTrainingData'
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
+              $ref: '#/components/schemas/PatchedDeploymentSlot'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDeploymentSlot'
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TrainingData'
+                $ref: '#/components/schemas/DeploymentSlot'
           description: ''
     delete:
-      operationId: training_data_destroy
-      description: ''
+      operationId: deployment_slot_destroy
+      description: Delete a deployment slot.
       parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this training data.
-        required: true
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
       tags:
-      - training_data
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
+        - deployment_slot
       responses:
         '204':
           description: No response body
-  /api/training_data/{id}/download_file/:
+  # =========================================================================
+  # AB Test
+  # =========================================================================
+  /api/v1/ab-test/:
     get:
-      operationId: training_data_download_file_retrieve
-      description: ''
+      operationId: ab_test_list
+      description: List AB tests.
       parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this training data.
-        required: true
+        - in: query
+          name: id
+          schema:
+            type: integer
+        - in: query
+          name: project
+          schema:
+            type: integer
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum:
+              - draft
+              - running
+              - stopped
+              - completed
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: page_size
+          required: false
+          schema:
+            type: integer
       tags:
-      - training_data
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
+        - ab_test
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TrainingData'
+                $ref: '#/components/schemas/PaginatedAbTestList'
           description: ''
-  /api/training_data/{id}/unlink_file/:
-    delete:
-      operationId: training_data_unlink_file_destroy
-      description: ''
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this training data.
-        required: true
+    post:
+      operationId: ab_test_create
+      description: Create an AB test.
       tags:
-      - training_data
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
+        - ab_test
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbTest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AbTest'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbTest'
+          description: ''
+  /api/v1/ab-test/{id}/:
+    get:
+      operationId: ab_test_retrieve
+      description: Retrieve an AB test.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      tags:
+        - ab_test
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbTest'
+          description: ''
+    patch:
+      operationId: ab_test_update
+      description: Update an AB test.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      tags:
+        - ab_test
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAbTest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAbTest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbTest'
+          description: ''
+    delete:
+      operationId: ab_test_destroy
+      description: Delete an AB test.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      tags:
+        - ab_test
       responses:
         '204':
           description: No response body
+  /api/v1/ab-test/{id}/start/:
+    post:
+      operationId: ab_test_start
+      description: Start an AB test.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      tags:
+        - ab_test
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbTest'
+          description: ''
+  /api/v1/ab-test/{id}/stop/:
+    post:
+      operationId: ab_test_stop
+      description: Stop an AB test.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      tags:
+        - ab_test
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbTest'
+          description: ''
+  /api/v1/ab-test/{id}/results/:
+    get:
+      operationId: ab_test_results
+      description: Get results for an AB test.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      tags:
+        - ab_test
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AbTestResult'
+          description: ''
+  /api/v1/ab-test/{id}/promote-winner/:
+    post:
+      operationId: ab_test_promote_winner
+      description: Promote the winning slot of an AB test.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      tags:
+        - ab_test
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                slot_id:
+                  type: integer
+              required:
+                - slot_id
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbTest'
+          description: ''
+  # =========================================================================
+  # Conversion Event
+  # =========================================================================
+  /api/v1/conversion-event/:
+    get:
+      operationId: conversion_event_list
+      description: List conversion events.
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: integer
+        - in: query
+          name: ab_test
+          schema:
+            type: integer
+        - in: query
+          name: slot
+          schema:
+            type: integer
+        - in: query
+          name: user_id
+          schema:
+            type: string
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: page_size
+          required: false
+          schema:
+            type: integer
+      tags:
+        - conversion_event
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedConversionEventList'
+          description: ''
+    post:
+      operationId: conversion_event_create
+      description: Create a conversion event.
+      tags:
+        - conversion_event
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversionEventCreate'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversionEvent'
+          description: ''
+  /api/v1/conversion-event/{id}/:
+    get:
+      operationId: conversion_event_retrieve
+      description: Retrieve a conversion event.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      tags:
+        - conversion_event
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversionEvent'
+          description: ''
+  /api/v1/conversion-event/batch/:
+    post:
+      operationId: conversion_event_batch_create
+      description: Create multiple conversion events in batch.
+      tags:
+        - conversion_event
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                events:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ConversionEventCreate'
+              required:
+                - events
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConversionEvent'
+          description: ''
+  # =========================================================================
+  # Retraining Schedule
+  # =========================================================================
+  /api/v1/retraining-schedule/:
+    get:
+      operationId: retraining_schedule_list
+      description: List retraining schedules.
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: integer
+        - in: query
+          name: deployment_slot
+          schema:
+            type: integer
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: page_size
+          required: false
+          schema:
+            type: integer
+      tags:
+        - retraining_schedule
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRetrainingScheduleList'
+          description: ''
+    post:
+      operationId: retraining_schedule_create
+      description: Create a retraining schedule.
+      tags:
+        - retraining_schedule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetrainingSchedule'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RetrainingSchedule'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetrainingSchedule'
+          description: ''
+  /api/v1/retraining-schedule/{id}/:
+    get:
+      operationId: retraining_schedule_retrieve
+      description: Retrieve a retraining schedule.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      tags:
+        - retraining_schedule
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetrainingSchedule'
+          description: ''
+    patch:
+      operationId: retraining_schedule_update
+      description: Update a retraining schedule.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      tags:
+        - retraining_schedule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedRetrainingSchedule'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedRetrainingSchedule'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetrainingSchedule'
+          description: ''
+    delete:
+      operationId: retraining_schedule_destroy
+      description: Delete a retraining schedule.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      tags:
+        - retraining_schedule
+      responses:
+        '204':
+          description: No response body
+  /api/v1/retraining-schedule/{id}/trigger/:
+    post:
+      operationId: retraining_schedule_trigger
+      description: Manually trigger a retraining run for this schedule.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      tags:
+        - retraining_schedule
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetrainingRun'
+          description: ''
+  # =========================================================================
+  # Retraining Run
+  # =========================================================================
+  /api/v1/retraining-run/:
+    get:
+      operationId: retraining_run_list
+      description: List retraining runs.
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: integer
+        - in: query
+          name: schedule
+          schema:
+            type: integer
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum:
+              - pending
+              - running
+              - completed
+              - failed
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: page_size
+          required: false
+          schema:
+            type: integer
+      tags:
+        - retraining_run
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRetrainingRunList'
+          description: ''
+  /api/v1/retraining-run/{id}/:
+    get:
+      operationId: retraining_run_retrieve
+      description: Retrieve a retraining run.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      tags:
+        - retraining_run
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetrainingRun'
+          description: ''
+  # =========================================================================
+  # User
+  # =========================================================================
+  /api/v1/user/:
+    get:
+      operationId: user_list
+      description: List users.
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: integer
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: page_size
+          required: false
+          schema:
+            type: integer
+      tags:
+        - user
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUserList'
+          description: ''
+    post:
+      operationId: user_create
+      description: Create a new user.
+      tags:
+        - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/v1/user/{id}/:
+    get:
+      operationId: user_retrieve
+      description: Retrieve a user.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      tags:
+        - user
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    patch:
+      operationId: user_update
+      description: Update a user.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      tags:
+        - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    delete:
+      operationId: user_destroy
+      description: Delete a user.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      tags:
+        - user
+      responses:
+        '204':
+          description: No response body
+  /api/v1/user/{id}/deactivate/:
+    post:
+      operationId: user_deactivate
+      description: Deactivate a user account.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      tags:
+        - user
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/v1/user/{id}/activate/:
+    post:
+      operationId: user_activate
+      description: Activate a user account.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      tags:
+        - user
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/v1/user/{id}/reset-password/:
+    post:
+      operationId: user_reset_password
+      description: Reset a user's password.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      tags:
+        - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                new_password:
+                  type: string
+              required:
+                - new_password
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestAuthDetail'
+          description: ''
 components:
   schemas:
+    # =====================================================================
+    # Existing schemas (preserved as-is)
+    # =====================================================================
     AuthToken:
       type: object
       properties:
@@ -2068,9 +2452,9 @@ components:
           type: string
           readOnly: true
       required:
-      - password
-      - token
-      - username
+        - password
+        - token
+        - username
     EvaluationConfig:
       type: object
       properties:
@@ -2092,8 +2476,8 @@ components:
         target_metric:
           $ref: '#/components/schemas/TargetMetricEnum'
       required:
-      - id
-      - ins_datetime
+        - id
+        - ins_datetime
     IDAndScore:
       type: object
       properties:
@@ -2103,8 +2487,8 @@ components:
           type: number
           format: float
       required:
-      - item_id
-      - score
+        - item_id
+        - score
     ItemMetaData:
       type: object
       properties:
@@ -2131,12 +2515,12 @@ components:
           type: integer
           readOnly: true
       required:
-      - basename
-      - filesize
-      - id
-      - ins_datetime
-      - project
-      - valid_columns_list_json
+        - basename
+        - filesize
+        - id
+        - ins_datetime
+        - project
+        - valid_columns_list_json
     JWT:
       type: object
       description: Serializer for JWT authentication.
@@ -2148,9 +2532,9 @@ components:
         user:
           $ref: '#/components/schemas/UserDetails'
       required:
-      - access_token
-      - refresh_token
-      - user
+        - access_token
+        - refresh_token
+        - user
     Login:
       type: object
       properties:
@@ -2162,7 +2546,7 @@ components:
         password:
           type: string
       required:
-      - password
+        - password
     ModelConfiguration:
       type: object
       properties:
@@ -2188,112 +2572,12 @@ components:
           format: date-time
           readOnly: true
       required:
-      - id
-      - ins_datetime
-      - parameters_json
-      - project
-      - recommender_class_name
-      - tuning_job
-    PaginatedItemMetaDataList:
-      type: object
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=4
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=2
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/ItemMetaData'
-    PaginatedModelConfigurationList:
-      type: object
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=4
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=2
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/ModelConfiguration'
-    PaginatedParameterTuningJobList:
-      type: object
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=4
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=2
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/ParameterTuningJob'
-    PaginatedTrainedModelList:
-      type: object
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=4
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=2
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/TrainedModel'
-    PaginatedTrainingDataList:
-      type: object
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=4
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=2
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/TrainingData'
+        - id
+        - ins_datetime
+        - parameters_json
+        - project
+        - recommender_class_name
+        - tuning_job
     ParameterTuningJob:
       type: object
       properties:
@@ -2361,13 +2645,20 @@ components:
           items:
             $ref: '#/components/schemas/TaskAndParameterJobLink'
           readOnly: true
+        status:
+          type: string
+          enum:
+            - pending
+            - running
+            - completed
+            - failed
       required:
-      - data
-      - evaluation
-      - id
-      - ins_datetime
-      - split
-      - task_links
+        - data
+        - evaluation
+        - id
+        - ins_datetime
+        - split
+        - task_links
     PasswordChange:
       type: object
       properties:
@@ -2378,8 +2669,8 @@ components:
           type: string
           maxLength: 128
       required:
-      - new_password1
-      - new_password2
+        - new_password1
+        - new_password2
     PasswordReset:
       type: object
       description: Serializer for requesting a password reset e-mail.
@@ -2388,7 +2679,7 @@ components:
           type: string
           format: email
       required:
-      - email
+        - email
     PasswordResetConfirm:
       type: object
       description: Serializer for confirming a password reset attempt.
@@ -2404,10 +2695,10 @@ components:
         token:
           type: string
       required:
-      - new_password1
-      - new_password2
-      - token
-      - uid
+        - new_password1
+        - new_password2
+        - token
+        - uid
     PatchedEvaluationConfig:
       type: object
       properties:
@@ -2544,6 +2835,13 @@ components:
           items:
             $ref: '#/components/schemas/TaskAndParameterJobLink'
           readOnly: true
+        status:
+          type: string
+          enum:
+            - pending
+            - running
+            - completed
+            - failed
     PatchedProject:
       type: object
       properties:
@@ -2705,11 +3003,11 @@ components:
           nullable: true
           maxLength: 256
       required:
-      - id
-      - ins_datetime
-      - item_column
-      - name
-      - user_column
+        - id
+        - ins_datetime
+        - item_column
+        - name
+        - user_column
     RawRecommendation:
       type: object
       properties:
@@ -2724,9 +3022,9 @@ components:
           items:
             $ref: '#/components/schemas/IDAndScore'
       required:
-      - recommendations
-      - user_id
-      - user_profile
+        - recommendations
+        - user_id
+        - user_profile
     RecommendationWithMetaData:
       type: object
       properties:
@@ -2737,9 +3035,9 @@ components:
         recommendations:
           type: string
       required:
-      - recommendations
-      - user_id
-      - user_profile
+        - recommendations
+        - user_id
+        - user_profile
     RestAuthDetail:
       type: object
       properties:
@@ -2747,12 +3045,12 @@ components:
           type: string
           readOnly: true
       required:
-      - detail
+        - detail
     SchemeEnum:
       enum:
-      - RG
-      - TG
-      - TU
+        - RG
+        - TG
+        - TU
       type: string
     SplitConfig:
       type: object
@@ -2791,24 +3089,24 @@ components:
           maximum: 2147483647
           minimum: -2147483648
       required:
-      - id
-      - ins_datetime
+        - id
+        - ins_datetime
     StatusEnum:
       enum:
-      - FAILURE
-      - PENDING
-      - RECEIVED
-      - RETRY
-      - REVOKED
-      - STARTED
-      - SUCCESS
+        - FAILURE
+        - PENDING
+        - RECEIVED
+        - RETRY
+        - REVOKED
+        - STARTED
+        - SUCCESS
       type: string
     TargetMetricEnum:
       enum:
-      - ndcg
-      - map
-      - recall
-      - hit
+        - ndcg
+        - map
+        - recall
+        - hit
       type: string
     TaskAndParameterJobLink:
       type: object
@@ -2816,14 +3114,14 @@ components:
         task:
           $ref: '#/components/schemas/TaskResult'
       required:
-      - task
+        - task
     TaskAndTrainedModelLink:
       type: object
       properties:
         task:
           $ref: '#/components/schemas/TaskResult'
       required:
-      - task
+        - task
     TaskLog:
       type: object
       properties:
@@ -2839,9 +3137,9 @@ components:
         task:
           type: integer
       required:
-      - id
-      - ins_datetime
-      - task
+        - id
+        - ins_datetime
+        - task
     TaskResult:
       type: object
       properties:
@@ -2851,7 +3149,7 @@ components:
           maxLength: 255
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusEnum'
+            - $ref: '#/components/schemas/StatusEnum'
           title: Task State
           description: Current state of the task being run
         date_created:
@@ -2871,9 +3169,9 @@ components:
           nullable: true
           description: Text of the traceback if the task generated one
       required:
-      - date_created
-      - date_done
-      - task_id
+        - date_created
+        - date_done
+        - task_id
     TokenRefresh:
       type: object
       properties:
@@ -2884,15 +3182,15 @@ components:
           type: string
           writeOnly: true
       required:
-      - access
-      - refresh
+        - access
+        - refresh
     TokenVerify:
       type: object
       properties:
         token:
           type: string
       required:
-      - token
+        - token
     TrainedModel:
       type: object
       properties:
@@ -2927,13 +3225,13 @@ components:
             $ref: '#/components/schemas/TaskAndTrainedModelLink'
           readOnly: true
       required:
-      - basename
-      - configuration
-      - data_loc
-      - filesize
-      - id
-      - ins_datetime
-      - task_links
+        - basename
+        - configuration
+        - data_loc
+        - filesize
+        - id
+        - ins_datetime
+        - task_links
     TrainingData:
       type: object
       properties:
@@ -2957,11 +3255,11 @@ components:
           type: integer
           readOnly: true
       required:
-      - basename
-      - filesize
-      - id
-      - ins_datetime
-      - project
+        - basename
+        - filesize
+        - id
+        - ins_datetime
+        - project
     UserDetails:
       type: object
       description: User model w/o password
@@ -2988,16 +3286,636 @@ components:
           type: string
           maxLength: 150
       required:
-      - email
-      - pk
-      - username
+        - email
+        - pk
+        - username
+    # =====================================================================
+    # Existing paginated schemas (preserved)
+    # =====================================================================
+    PaginatedItemMetaDataList:
+      type: object
+      properties:
+        count:
+          type: integer
+        next:
+          type: string
+          nullable: true
+          format: uri
+        previous:
+          type: string
+          nullable: true
+          format: uri
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemMetaData'
+    PaginatedModelConfigurationList:
+      type: object
+      properties:
+        count:
+          type: integer
+        next:
+          type: string
+          nullable: true
+          format: uri
+        previous:
+          type: string
+          nullable: true
+          format: uri
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelConfiguration'
+    PaginatedParameterTuningJobList:
+      type: object
+      properties:
+        count:
+          type: integer
+        next:
+          type: string
+          nullable: true
+          format: uri
+        previous:
+          type: string
+          nullable: true
+          format: uri
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParameterTuningJob'
+    PaginatedTrainedModelList:
+      type: object
+      properties:
+        count:
+          type: integer
+        next:
+          type: string
+          nullable: true
+          format: uri
+        previous:
+          type: string
+          nullable: true
+          format: uri
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrainedModel'
+    PaginatedTrainingDataList:
+      type: object
+      properties:
+        count:
+          type: integer
+        next:
+          type: string
+          nullable: true
+          format: uri
+        previous:
+          type: string
+          nullable: true
+          format: uri
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrainingData'
+    # =====================================================================
+    # New schemas
+    # =====================================================================
+    ApiKey:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        key:
+          type: string
+          readOnly: true
+          description: Only returned on create.
+        prefix:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_active:
+          type: boolean
+      required:
+        - id
+        - name
+        - prefix
+        - created_at
+        - is_active
+    DeploymentSlot:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        project:
+          type: integer
+        trained_model:
+          type: integer
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+        - id
+        - name
+        - project
+        - is_active
+        - created_at
+        - updated_at
+    PatchedDeploymentSlot:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        project:
+          type: integer
+        trained_model:
+          type: integer
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    AbTest:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        project:
+          type: integer
+        slots:
+          type: array
+          items:
+            type: integer
+        status:
+          type: string
+          enum:
+            - draft
+            - running
+            - stopped
+            - completed
+        start_time:
+          type: string
+          format: date-time
+          nullable: true
+        end_time:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+        - id
+        - name
+        - project
+        - slots
+        - status
+        - created_at
+    PatchedAbTest:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        project:
+          type: integer
+        slots:
+          type: array
+          items:
+            type: integer
+        status:
+          type: string
+          enum:
+            - draft
+            - running
+            - stopped
+            - completed
+        start_time:
+          type: string
+          format: date-time
+          nullable: true
+        end_time:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    AbTestResult:
+      type: object
+      properties:
+        slot_id:
+          type: integer
+        slot_name:
+          type: string
+        impressions:
+          type: integer
+        conversions:
+          type: integer
+        conversion_rate:
+          type: number
+          format: float
+        confidence:
+          type: number
+          format: float
+      required:
+        - slot_id
+        - slot_name
+        - impressions
+        - conversions
+        - conversion_rate
+        - confidence
+    ConversionEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        ab_test:
+          type: integer
+        slot:
+          type: integer
+        user_id:
+          type: string
+        item_id:
+          type: string
+          nullable: true
+        event_type:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+        - id
+        - ab_test
+        - slot
+        - user_id
+        - event_type
+        - created_at
+    ConversionEventCreate:
+      type: object
+      properties:
+        ab_test:
+          type: integer
+        slot:
+          type: integer
+        user_id:
+          type: string
+        item_id:
+          type: string
+          nullable: true
+        event_type:
+          type: string
+      required:
+        - ab_test
+        - slot
+        - user_id
+        - event_type
+    RetrainingSchedule:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        deployment_slot:
+          type: integer
+        cron_expression:
+          type: string
+        is_active:
+          type: boolean
+        last_run_at:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        next_run_at:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+        - id
+        - deployment_slot
+        - cron_expression
+        - is_active
+        - created_at
+    PatchedRetrainingSchedule:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        deployment_slot:
+          type: integer
+        cron_expression:
+          type: string
+        is_active:
+          type: boolean
+        last_run_at:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        next_run_at:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    RetrainingRun:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        schedule:
+          type: integer
+        status:
+          type: string
+          enum:
+            - pending
+            - running
+            - completed
+            - failed
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        trained_model:
+          type: integer
+          nullable: true
+        error_message:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+        - id
+        - schedule
+        - status
+        - created_at
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+          nullable: true
+        last_name:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        is_staff:
+          type: boolean
+        date_joined:
+          type: string
+          format: date-time
+          readOnly: true
+        last_login:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+      required:
+        - id
+        - username
+        - email
+        - is_active
+        - is_staff
+        - date_joined
+    UserCreate:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          writeOnly: true
+        first_name:
+          type: string
+          nullable: true
+        last_name:
+          type: string
+          nullable: true
+        is_staff:
+          type: boolean
+      required:
+        - username
+        - email
+        - password
+    PatchedUser:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+          nullable: true
+        last_name:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        is_staff:
+          type: boolean
+    # =====================================================================
+    # New paginated schemas
+    # =====================================================================
+    PaginatedApiKeyList:
+      type: object
+      properties:
+        count:
+          type: integer
+        next:
+          type: string
+          nullable: true
+          format: uri
+        previous:
+          type: string
+          nullable: true
+          format: uri
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiKey'
+    PaginatedDeploymentSlotList:
+      type: object
+      properties:
+        count:
+          type: integer
+        next:
+          type: string
+          nullable: true
+          format: uri
+        previous:
+          type: string
+          nullable: true
+          format: uri
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeploymentSlot'
+    PaginatedAbTestList:
+      type: object
+      properties:
+        count:
+          type: integer
+        next:
+          type: string
+          nullable: true
+          format: uri
+        previous:
+          type: string
+          nullable: true
+          format: uri
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbTest'
+    PaginatedConversionEventList:
+      type: object
+      properties:
+        count:
+          type: integer
+        next:
+          type: string
+          nullable: true
+          format: uri
+        previous:
+          type: string
+          nullable: true
+          format: uri
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConversionEvent'
+    PaginatedRetrainingScheduleList:
+      type: object
+      properties:
+        count:
+          type: integer
+        next:
+          type: string
+          nullable: true
+          format: uri
+        previous:
+          type: string
+          nullable: true
+          format: uri
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RetrainingSchedule'
+    PaginatedRetrainingRunList:
+      type: object
+      properties:
+        count:
+          type: integer
+        next:
+          type: string
+          nullable: true
+          format: uri
+        previous:
+          type: string
+          nullable: true
+          format: uri
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RetrainingRun'
+    PaginatedUserList:
+      type: object
+      properties:
+        count:
+          type: integer
+        next:
+          type: string
+          nullable: true
+          format: uri
+        previous:
+          type: string
+          nullable: true
+          format: uri
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
   securitySchemes:
-    cookieAuth:
-      type: apiKey
-      in: cookie
-      name: Session
-    tokenAuth:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKeyAuth:
       type: apiKey
       in: header
-      name: Authorization
-      description: Token-based authentication with required prefix "Token"
+      name: X-API-Key

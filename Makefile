@@ -1,4 +1,4 @@
-.PHONY: all build build-all test test-coverage clean install lint fmt vet help
+.PHONY: all build build-all test test-coverage clean install lint fmt vet help generate install-tools
 
 # Binary name
 BINARY_NAME=recotem
@@ -52,6 +52,18 @@ build-all: clean
 		GOOS=$$GOOS GOARCH=$$GOARCH $(GOBUILD) $(LDFLAGS) -o $$output_name $(MAIN_PATH); \
 	done
 	@echo "Cross-compilation complete"
+
+## generate: Generate OpenAPI client code
+generate:
+	@echo "Generating OpenAPI client..."
+	cd pkg/openapi && oapi-codegen --config cfg.yaml recotem.yaml
+	@echo "OpenAPI client generated"
+
+## install-tools: Install development tools
+install-tools:
+	@echo "Installing development tools..."
+	go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+	@echo "Tools installed"
 
 ## test: Run tests
 test:

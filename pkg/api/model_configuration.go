@@ -76,3 +76,26 @@ func (c Client) GetModelConfigurations(id *int, page *int, pageSize *int,
 
 	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
+
+func (c Client) UpdateModelConfiguration(id int, name *string,
+	parametersJson *string) (*openapi.ModelConfiguration, error) {
+	client, err := c.newApiClient()
+	if err != nil {
+		return nil, err
+	}
+
+	req := openapi.ModelConfigurationUpdateJSONRequestBody{
+		Name:           name,
+		ParametersJson: parametersJson,
+	}
+	resp, err := client.ModelConfigurationUpdateWithResponse(c.Context, id, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.JSON200 != nil {
+		return resp.JSON200, nil
+	}
+
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
+}

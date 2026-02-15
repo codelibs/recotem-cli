@@ -1,183 +1,163 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 
-	"github.com/urfave/cli/v2"
-	"recotem.org/cli/recotem/pkg/api"
-	"recotem.org/cli/recotem/pkg/cfg"
+	"github.com/spf13/cobra"
 	"recotem.org/cli/recotem/pkg/openapi"
 	"recotem.org/cli/recotem/pkg/utils"
 )
 
-func ProjectCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:    "project",
+func newProjectCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "project",
 		Aliases: []string{"p"},
-		Usage:   "tasks for a project",
-		Subcommands: []*cli.Command{
-			projectCreateCommand(),
-			projectDeleteCommand(),
-			projectListCommand(),
-		},
+		Short:   "Manage projects",
 	}
-	return &cmd
+
+	cmd.AddCommand(
+		newProjectListCmd(),
+		newProjectCreateCmd(),
+		newProjectDeleteCmd(),
+		newProjectSummaryCmd(),
+	)
+
+	return cmd
 }
 
-func projectCreateCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:  "create",
-		Usage: "create a new project",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:     "name",
-				Aliases:  []string{"n"},
-				Usage:    "Project name",
-				Required: true,
-			},
-			&cli.StringFlag{
-				Name:     "user-column",
-				Aliases:  []string{"u"},
-				Usage:    "User column",
-				Required: true,
-			},
-			&cli.StringFlag{
-				Name:     "item-column",
-				Aliases:  []string{"i"},
-				Usage:    "Item column",
-				Required: true,
-			},
-			&cli.StringFlag{
-				Name:    "time-column",
-				Aliases: []string{"t"},
-				Usage:   "Time column",
-			},
-			&cli.StringFlag{
-				Name:        "format",
-				Aliases:     []string{"fmt"},
-				Usage:       "Output format",
-				DefaultText: "line",
-			},
-		},
-		Action: func(c *cli.Context) error {
-			config, err := cfg.LoadRecotemConfig()
-			if err != nil {
-				return err
-			}
-			client := api.NewClient(c.Context, config)
-			name := c.String("name")
-			userColumn := c.String("user-column")
-			itemColumn := c.String("item-column")
-			project, err := client.CreateProject(name, userColumn, itemColumn,
-				utils.NilOrString(c.String("time-column")))
-			if err != nil {
-				return err
-			}
-			printProject(c.String("format"), *project)
-			return nil
-		},
-	}
-	return &cmd
-}
+func newProjectListCmd() *cobra.Command {
+	var id, name string
 
-func projectDeleteCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:  "delete",
-		Usage: "delete the project",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:     "id",
-				Aliases:  []string{"i"},
-				Usage:    "Project ID",
-				Required: true,
-			},
-			&cli.StringFlag{
-				Name:        "format",
-				Aliases:     []string{"fmt"},
-				Usage:       "Output format",
-				DefaultText: "line",
-			},
-		},
-		Action: func(c *cli.Context) error {
-			config, err := cfg.LoadRecotemConfig()
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "List projects",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
 			if err != nil {
 				return err
 			}
-			client := api.NewClient(c.Context, config)
-			id, err := strconv.Atoi(c.String("id"))
-			if err != nil {
-				return err
-			}
-			err = client.DeleteProject(id)
-			if err != nil {
-				return err
-			}
-			utils.PrintId(c.String("format"), id)
-			return nil
-		},
-	}
-	return &cmd
-}
-
-func projectListCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:  "list",
-		Usage: "get projects",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "id",
-				Aliases: []string{"i"},
-				Usage:   "Project ID",
-			},
-			&cli.StringFlag{
-				Name:    "name",
-				Aliases: []string{"n"},
-				Usage:   "Project name",
-			},
-			&cli.StringFlag{
-				Name:        "format",
-				Aliases:     []string{"fmt"},
-				Usage:       "Output format",
-				DefaultText: "line",
-			},
-		},
-		Action: func(c *cli.Context) error {
-			config, err := cfg.LoadRecotemConfig()
-			if err != nil {
-				return err
-			}
-			client := api.NewClient(c.Context, config)
 			projects, err := client.GetProjects(
-				utils.NilOrInt(c.String("id")),
-				utils.NilOrString(c.String("name")))
+				utils.NilOrInt(id),
+				utils.NilOrString(name))
 			if err != nil {
 				return err
 			}
 			for _, x := range *projects {
-				printProject(c.String("format"), x)
+				printProject(getOutputFormat(), x)
 			}
 			return nil
 		},
 	}
-	return &cmd
+
+	cmd.Flags().StringVarP(&id, "id", "i", "", "Project ID")
+	cmd.Flags().StringVarP(&name, "name", "n", "", "Project name")
+
+	return cmd
+}
+
+func newProjectCreateCmd() *cobra.Command {
+	var name, userColumn, itemColumn, timeColumn string
+
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "Create a new project",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
+			if err != nil {
+				return err
+			}
+			project, err := client.CreateProject(name, userColumn, itemColumn,
+				utils.NilOrString(timeColumn))
+			if err != nil {
+				return err
+			}
+			printProject(getOutputFormat(), *project)
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&name, "name", "n", "", "Project name")
+	cmd.Flags().StringVarP(&userColumn, "user-column", "u", "", "User column")
+	cmd.Flags().StringVarP(&itemColumn, "item-column", "i", "", "Item column")
+	cmd.Flags().StringVarP(&timeColumn, "time-column", "t", "", "Time column")
+	_ = cmd.MarkFlagRequired("name")
+	_ = cmd.MarkFlagRequired("user-column")
+	_ = cmd.MarkFlagRequired("item-column")
+
+	return cmd
+}
+
+func newProjectDeleteCmd() *cobra.Command {
+	var id string
+
+	cmd := &cobra.Command{
+		Use:   "delete",
+		Short: "Delete a project",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
+			if err != nil {
+				return err
+			}
+			idInt, err := strconv.Atoi(id)
+			if err != nil {
+				return err
+			}
+			err = client.DeleteProject(idInt)
+			if err != nil {
+				return err
+			}
+			utils.PrintId(getOutputFormat(), idInt)
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&id, "id", "i", "", "Project ID")
+	_ = cmd.MarkFlagRequired("id")
+
+	return cmd
+}
+
+func newProjectSummaryCmd() *cobra.Command {
+	var id string
+
+	cmd := &cobra.Command{
+		Use:   "summary",
+		Short: "Get project summary",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
+			if err != nil {
+				return err
+			}
+			idInt, err := strconv.Atoi(id)
+			if err != nil {
+				return err
+			}
+			summary, err := client.GetProjectSummary(idInt)
+			if err != nil {
+				return err
+			}
+			fmt.Println(string(summary))
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&id, "id", "i", "", "Project ID")
+	_ = cmd.MarkFlagRequired("id")
+
+	return cmd
 }
 
 func printProject(format string, x openapi.Project) {
-	if format == "json" {
-		body := map[string]string{
-			"id":          strconv.Itoa(x.Id),
+	if format == "json" || format == "yaml" {
+		m := map[string]any{
+			"id":          x.Id,
 			"name":        x.Name,
 			"user_column": x.UserColumn,
 			"item_column": x.ItemColumn,
-			"time_column": utils.Atoa(x.TimeColumn)}
-		bytes, err := json.Marshal(body)
-		if err != nil {
-			fmt.Println("JSON marshal error: ", err)
-			return
+			"time_column": utils.Atoa(x.TimeColumn),
 		}
-		fmt.Println(string(bytes))
+		utils.PrintOutput(format, m)
 	} else {
 		fmt.Println(x.Id,
 			x.Name,

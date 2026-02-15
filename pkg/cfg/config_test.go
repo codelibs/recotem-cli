@@ -6,9 +6,9 @@ import (
 	"testing"
 )
 
-func TestNewRectemConfig(t *testing.T) {
+func TestNewRecotemConfig(t *testing.T) {
 	url := "http://test.example.com"
-	config := NewRectemConfig(url)
+	config := NewRecotemConfig(url)
 
 	if config.Url != url {
 		t.Errorf("expected URL %s, got %s", url, config.Url)
@@ -19,7 +19,7 @@ func TestNewRectemConfig(t *testing.T) {
 	}
 }
 
-func TestNewRectemConfigFromFile(t *testing.T) {
+func TestNewRecotemConfigFromFile(t *testing.T) {
 	// Create a temporary directory
 	tmpDir, err := os.MkdirTemp("", "recotem-test-*")
 	if err != nil {
@@ -38,7 +38,7 @@ token: test-token-123
 	}
 
 	// Test loading the config
-	config, err := NewRectemConfigFromFile(configPath)
+	config, err := NewRecotemConfigFromFile(configPath)
 	if err != nil {
 		t.Fatalf("failed to load config: %v", err)
 	}
@@ -52,14 +52,14 @@ token: test-token-123
 	}
 }
 
-func TestNewRectemConfigFromFileNotFound(t *testing.T) {
-	_, err := NewRectemConfigFromFile("/nonexistent/path/config.yaml")
+func TestNewRecotemConfigFromFileNotFound(t *testing.T) {
+	_, err := NewRecotemConfigFromFile("/nonexistent/path/config.yaml")
 	if err == nil {
 		t.Error("expected error for nonexistent file, got nil")
 	}
 }
 
-func TestNewRectemConfigFromFileInvalid(t *testing.T) {
+func TestNewRecotemConfigFromFileInvalid(t *testing.T) {
 	// Create a temporary directory
 	tmpDir, err := os.MkdirTemp("", "recotem-test-*")
 	if err != nil {
@@ -75,7 +75,7 @@ func TestNewRectemConfigFromFileInvalid(t *testing.T) {
 		t.Fatalf("failed to write invalid config: %v", err)
 	}
 
-	_, err = NewRectemConfigFromFile(configPath)
+	_, err = NewRecotemConfigFromFile(configPath)
 	if err == nil {
 		t.Error("expected error for invalid YAML, got nil")
 	}
@@ -121,8 +121,8 @@ func TestRecotemConfigStructure(t *testing.T) {
 }
 
 // Test with empty values
-func TestNewRectemConfigEmpty(t *testing.T) {
-	config := NewRectemConfig("")
+func TestNewRecotemConfigEmpty(t *testing.T) {
+	config := NewRecotemConfig("")
 
 	if config.Url != "" {
 		t.Errorf("expected empty URL, got %s", config.Url)
@@ -134,7 +134,7 @@ func TestNewRectemConfigEmpty(t *testing.T) {
 }
 
 // Test loading config with only URL
-func TestNewRectemConfigFromFileOnlyUrl(t *testing.T) {
+func TestNewRecotemConfigFromFileOnlyUrl(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "recotem-test-*")
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
@@ -149,7 +149,7 @@ func TestNewRectemConfigFromFileOnlyUrl(t *testing.T) {
 		t.Fatalf("failed to write test config: %v", err)
 	}
 
-	config, err := NewRectemConfigFromFile(configPath)
+	config, err := NewRecotemConfigFromFile(configPath)
 	if err != nil {
 		t.Fatalf("failed to load config: %v", err)
 	}
@@ -164,7 +164,7 @@ func TestNewRectemConfigFromFileOnlyUrl(t *testing.T) {
 }
 
 // Test loading empty config file
-func TestNewRectemConfigFromFileEmpty(t *testing.T) {
+func TestNewRecotemConfigFromFileEmpty(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "recotem-test-*")
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
@@ -177,7 +177,7 @@ func TestNewRectemConfigFromFileEmpty(t *testing.T) {
 		t.Fatalf("failed to write empty config: %v", err)
 	}
 
-	config, err := NewRectemConfigFromFile(configPath)
+	config, err := NewRecotemConfigFromFile(configPath)
 	if err != nil {
 		t.Fatalf("failed to load empty config: %v", err)
 	}

@@ -16,7 +16,7 @@ func TestLoadRecotemConfigNewFile(t *testing.T) {
 
 	// For now, let's just verify the function signature and basic behavior
 	// by testing the internal functions it uses
-	config := NewRectemConfig("http://localhost:8000")
+	config := NewRecotemConfig("http://localhost:8000")
 	if config.Url != "http://localhost:8000" {
 		t.Errorf("expected default URL, got %s", config.Url)
 	}
@@ -47,7 +47,7 @@ token: existing-token
 	}
 
 	// Load the config
-	config, err := NewRectemConfigFromFile(configPath)
+	config, err := NewRecotemConfigFromFile(configPath)
 	if err != nil {
 		t.Fatalf("failed to load config: %v", err)
 	}
@@ -62,7 +62,7 @@ token: existing-token
 }
 
 func TestDefaultConfigValues(t *testing.T) {
-	config := NewRectemConfig("http://localhost:8000")
+	config := NewRecotemConfig("http://localhost:8000")
 
 	if config.Url != "http://localhost:8000" {
 		t.Errorf("expected default URL http://localhost:8000, got %s", config.Url)
@@ -110,7 +110,7 @@ func TestConfigFileCreation(t *testing.T) {
 	}
 
 	// Create and save config
-	config := NewRectemConfig("http://localhost:8000")
+	config := NewRecotemConfig("http://localhost:8000")
 	err = config.save(configPath)
 	if err != nil {
 		t.Fatalf("failed to save config: %v", err)
@@ -122,7 +122,7 @@ func TestConfigFileCreation(t *testing.T) {
 	}
 
 	// Load and verify
-	loadedConfig, err := NewRectemConfigFromFile(configPath)
+	loadedConfig, err := NewRecotemConfigFromFile(configPath)
 	if err != nil {
 		t.Fatalf("failed to load config: %v", err)
 	}
@@ -154,7 +154,7 @@ func TestConfigRoundTrip(t *testing.T) {
 	}
 
 	// Load
-	loaded, err := NewRectemConfigFromFile(configPath)
+	loaded, err := NewRecotemConfigFromFile(configPath)
 	if err != nil {
 		t.Fatalf("failed to load config: %v", err)
 	}
@@ -200,7 +200,7 @@ func TestConfigUpdate(t *testing.T) {
 	}
 
 	// Load and verify
-	loaded, err := NewRectemConfigFromFile(configPath)
+	loaded, err := NewRecotemConfigFromFile(configPath)
 	if err != nil {
 		t.Fatalf("failed to load updated config: %v", err)
 	}

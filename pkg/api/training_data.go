@@ -102,3 +102,39 @@ func (c Client) GetTrainingData(id *int, page *int, pageSize *int, project *int)
 
 	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
+
+func (c Client) DownloadTrainingData(id int, output string) error {
+	client, err := c.newApiClient()
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.TrainingDataDownloadWithResponse(c.Context, id)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode() != 200 {
+		return fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
+	}
+
+	return os.WriteFile(output, resp.Body, 0600)
+}
+
+func (c Client) PreviewTrainingData(id int) ([]byte, error) {
+	client, err := c.newApiClient()
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.TrainingDataPreviewWithResponse(c.Context, id, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode() >= 200 && resp.StatusCode() < 300 {
+		return resp.Body, nil
+	}
+
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
+}

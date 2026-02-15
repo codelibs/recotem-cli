@@ -1,31 +1,20 @@
 package main
 
 import (
-	"log"
 	"os"
-
-	"github.com/urfave/cli/v2"
 
 	"recotem.org/cli/recotem/pkg/cmd"
 )
 
-func main() {
-	app := &cli.App{
-		Commands: []*cli.Command{
-			cmd.EvaluationConfigCommand(),
-			cmd.ItemMetaDataCommand(),
-			cmd.LoginCommand(),
-			cmd.ModelConfigurationCommand(),
-			cmd.ParameterTuningJobCommand(),
-			cmd.ProjectCommand(),
-			cmd.SplitConfigCommand(),
-			cmd.TrainedModelCommand(),
-			cmd.TrainingDataCommand(),
-		},
-	}
+var (
+	Version   = "dev"
+	Commit    = "unknown"
+	BuildTime = "unknown"
+)
 
-	err := app.Run(os.Args)
-	if err != nil {
-		log.Fatal(err)
+func main() {
+	rootCmd := cmd.NewRootCmd(Version, Commit, BuildTime)
+	if err := rootCmd.Execute(); err != nil {
+		os.Exit(1)
 	}
 }

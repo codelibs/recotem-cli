@@ -85,7 +85,7 @@ func (c Client) DownloadTrainedModel(id int, output string) error {
 		return err
 	}
 
-	resp, err := client.TrainedModelDownloadFileRetrieveWithResponse(c.Context, id)
+	resp, err := client.TrainedModelDownloadFileWithResponse(c.Context, id)
 	if err != nil {
 		return err
 	}
@@ -94,10 +94,67 @@ func (c Client) DownloadTrainedModel(id int, output string) error {
 		return fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 	}
 
-	err = os.WriteFile(output, resp.Body, 0600)
+	return os.WriteFile(output, resp.Body, 0600)
+}
+
+func (c Client) Recommend(id int, userID string, nItems int) (*openapi.RawRecommendation, error) {
+	client, err := c.newApiClient()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	req := openapi.TrainedModelRecommendJSONRequestBody{
+		UserId: userID,
+		NItems: nItems,
+	}
+	resp, err := client.TrainedModelRecommendWithResponse(c.Context, id, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.JSON200 != nil {
+		return resp.JSON200, nil
+	}
+
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
+}
+
+func (c Client) SampleRecommend(id int) (*openapi.RawRecommendation, error) {
+	client, err := c.newApiClient()
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.TrainedModelSampleRecommendWithResponse(c.Context, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.JSON200 != nil {
+		return resp.JSON200, nil
+	}
+
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
+}
+
+func (c Client) RecommendProfile(id int, itemIDs []string, nItems int) (*openapi.RawRecommendation, error) {
+	client, err := c.newApiClient()
+	if err != nil {
+		return nil, err
+	}
+
+	req := openapi.TrainedModelRecommendProfileJSONRequestBody{
+		ItemIds: itemIDs,
+		NItems:  nItems,
+	}
+	resp, err := client.TrainedModelRecommendProfileWithResponse(c.Context, id, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.JSON200 != nil {
+		return resp.JSON200, nil
+	}
+
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }

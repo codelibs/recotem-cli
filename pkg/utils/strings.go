@@ -32,7 +32,10 @@ func Ftoa(v *float32) string {
 	return strconv.FormatFloat(float64(*v), 'f', -1, 64)
 }
 
-func FormatTime(t time.Time) string {
+func FormatTime(t *time.Time) string {
+	if t == nil {
+		return NoValue
+	}
 	return t.Format(time.RFC3339)
 }
 

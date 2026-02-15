@@ -33,7 +33,7 @@ func TestSaveRecotemConfig(t *testing.T) {
 	}
 
 	// Load the saved config and verify
-	loadedConfig, err := NewRectemConfigFromFile(configPath)
+	loadedConfig, err := NewRecotemConfigFromFile(configPath)
 	if err != nil {
 		t.Fatalf("failed to load saved config: %v", err)
 	}
@@ -111,7 +111,7 @@ func TestSaveOverwritesExisting(t *testing.T) {
 	}
 
 	// Load and verify it has the second config
-	loadedConfig, err := NewRectemConfigFromFile(configPath)
+	loadedConfig, err := NewRecotemConfigFromFile(configPath)
 	if err != nil {
 		t.Fatalf("failed to load config: %v", err)
 	}
@@ -142,7 +142,7 @@ func TestSaveEmptyConfig(t *testing.T) {
 	}
 
 	// Load and verify
-	loadedConfig, err := NewRectemConfigFromFile(configPath)
+	loadedConfig, err := NewRecotemConfigFromFile(configPath)
 	if err != nil {
 		t.Fatalf("failed to load empty config: %v", err)
 	}
@@ -176,7 +176,7 @@ func TestSaveWithSpecialCharacters(t *testing.T) {
 	}
 
 	// Load and verify
-	loadedConfig, err := NewRectemConfigFromFile(configPath)
+	loadedConfig, err := NewRecotemConfigFromFile(configPath)
 	if err != nil {
 		t.Fatalf("failed to load config: %v", err)
 	}

@@ -44,13 +44,13 @@ func NilOrScheme(s string) *openapi.SchemeEnum {
 		return nil
 	}
 	if *scheme == "RG" {
-		x := openapi.SchemeEnumRG
+		x := openapi.RG
 		return &x
 	} else if *scheme == "TG" {
-		x := openapi.SchemeEnumTG
+		x := openapi.TG
 		return &x
 	} else if *scheme == "TU" {
-		x := openapi.SchemeEnumTU
+		x := openapi.TU
 		return &x
 	}
 	return nil
@@ -62,16 +62,16 @@ func NilOrTargetMetric(s string) *openapi.TargetMetricEnum {
 		return nil
 	}
 	if *scheme == "hit" {
-		x := openapi.TargetMetricEnumHit
+		x := openapi.Hit
 		return &x
 	} else if *scheme == "map" {
-		x := openapi.TargetMetricEnumMap
+		x := openapi.Map
 		return &x
 	} else if *scheme == "recall" {
-		x := openapi.TargetMetricEnumRecall
+		x := openapi.Recall
 		return &x
 	} else if *scheme == "ndcg" {
-		x := openapi.TargetMetricEnumNdcg
+		x := openapi.Ndcg
 		return &x
 	}
 	return nil

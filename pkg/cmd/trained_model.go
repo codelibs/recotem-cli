@@ -4,218 +4,287 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/urfave/cli/v2"
-	"recotem.org/cli/recotem/pkg/api"
-	"recotem.org/cli/recotem/pkg/cfg"
+	"github.com/spf13/cobra"
 	"recotem.org/cli/recotem/pkg/openapi"
 	"recotem.org/cli/recotem/pkg/utils"
 )
 
-func TrainedModelCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:    "trained-model",
+func newTrainedModelCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "trained-model",
 		Aliases: []string{"tm"},
-		Usage:   "options for trained model",
-		Subcommands: []*cli.Command{
-			trainedModelCreateCommand(),
-			trainedModelDeleteCommand(),
-			trainedModelDownloadCommand(),
-			trainedModelListCommand(),
-		},
+		Short:   "Manage trained models",
 	}
-	return &cmd
+
+	cmd.AddCommand(
+		newTrainedModelListCmd(),
+		newTrainedModelCreateCmd(),
+		newTrainedModelDeleteCmd(),
+		newTrainedModelDownloadCmd(),
+		newTrainedModelRecommendCmd(),
+		newTrainedModelSampleRecommendCmd(),
+		newTrainedModelRecommendProfileCmd(),
+	)
+
+	return cmd
 }
 
-func trainedModelCreateCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:  "create",
-		Usage: "create a new trained model",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:     "configuration",
-				Aliases:  []string{"c"},
-				Usage:    "Configuration",
-				Required: true,
-			},
-			&cli.StringFlag{
-				Name:     "data-loc",
-				Aliases:  []string{"dl"},
-				Usage:    "Data loc",
-				Required: true,
-			},
-			&cli.StringFlag{
-				Name:    "file",
-				Aliases: []string{"f"},
-				Usage:   "File",
-			},
-			&cli.StringFlag{
-				Name:    "irspack-version",
-				Aliases: []string{"iv"},
-				Usage:   "irspack version",
-			},
+func newTrainedModelListCmd() *cobra.Command {
+	var dataLoc, dataLocProject, id, page, pageSize string
+
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "List trained models",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
+			if err != nil {
+				return err
+			}
+			tmList, err := client.GetTrainedModels(
+				utils.NilOrInt(dataLoc),
+				utils.NilOrInt(dataLocProject),
+				utils.NilOrInt(id),
+				utils.NilOrInt(page),
+				utils.NilOrInt(pageSize))
+			if err != nil {
+				return err
+			}
+			format := getOutputFormat()
+			if format == "json" || format == "yaml" {
+				utils.PrintOutput(format, tmList)
+			} else {
+				for _, x := range *tmList.Results {
+					printTrainedModel(x)
+				}
+			}
+			return nil
 		},
-		Action: func(c *cli.Context) error {
-			config, err := cfg.LoadRecotemConfig()
+	}
+
+	cmd.Flags().StringVar(&dataLoc, "data-loc", "", "Data loc")
+	cmd.Flags().StringVar(&dataLocProject, "data-loc-project", "", "Data loc project")
+	cmd.Flags().StringVarP(&id, "id", "i", "", "Trained model ID")
+	cmd.Flags().StringVarP(&page, "page", "p", "", "Page")
+	cmd.Flags().StringVar(&pageSize, "page-size", "", "Page size")
+
+	return cmd
+}
+
+func newTrainedModelCreateCmd() *cobra.Command {
+	var configuration, dataLoc, file, irspackVersion string
+
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "Create a trained model",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
 			if err != nil {
 				return err
 			}
-			client := api.NewClient(c.Context, config)
-			configuration, err := strconv.Atoi(c.String("configuration"))
+			configID, err := strconv.Atoi(configuration)
 			if err != nil {
 				return err
 			}
-			dataLoc, err := strconv.Atoi(c.String("data-loc"))
+			dataLocID, err := strconv.Atoi(dataLoc)
 			if err != nil {
 				return err
 			}
 			trainedModel, err := client.CreateTrainedModel(
-				configuration,
-				dataLoc,
-				utils.NilOrString(c.String("file")),
-				utils.NilOrString(c.String("irspack-version")))
+				configID, dataLocID,
+				utils.NilOrString(file),
+				utils.NilOrString(irspackVersion))
 			if err != nil {
 				return err
 			}
-			printTrainedModel(*trainedModel)
+			format := getOutputFormat()
+			if format == "json" || format == "yaml" {
+				utils.PrintOutput(format, trainedModel)
+			} else {
+				printTrainedModel(*trainedModel)
+			}
 			return nil
 		},
 	}
-	return &cmd
+
+	cmd.Flags().StringVarP(&configuration, "configuration", "c", "", "Configuration ID")
+	cmd.Flags().StringVar(&dataLoc, "data-loc", "", "Data loc ID")
+	cmd.Flags().StringVarP(&file, "file", "f", "", "File")
+	cmd.Flags().StringVar(&irspackVersion, "irspack-version", "", "irspack version")
+	_ = cmd.MarkFlagRequired("configuration")
+	_ = cmd.MarkFlagRequired("data-loc")
+
+	return cmd
 }
 
-func trainedModelDeleteCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:  "delete",
-		Usage: "delete the trained model",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:     "id",
-				Aliases:  []string{"i"},
-				Usage:    "Trained model ID",
-				Required: true,
-			},
-		},
-		Action: func(c *cli.Context) error {
-			config, err := cfg.LoadRecotemConfig()
+func newTrainedModelDeleteCmd() *cobra.Command {
+	var id string
+
+	cmd := &cobra.Command{
+		Use:   "delete",
+		Short: "Delete a trained model",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
 			if err != nil {
 				return err
 			}
-			client := api.NewClient(c.Context, config)
-			id, err := strconv.Atoi(c.String("id"))
+			idInt, err := strconv.Atoi(id)
 			if err != nil {
 				return err
 			}
-			err = client.DeleteTrainedModel(id)
+			err = client.DeleteTrainedModel(idInt)
 			if err != nil {
 				return err
 			}
-			fmt.Println(id)
+			format := getOutputFormat()
+			if format == "json" || format == "yaml" {
+				utils.PrintOutput(format, map[string]any{"id": idInt, "deleted": true})
+			} else {
+				fmt.Println(idInt)
+			}
 			return nil
 		},
 	}
-	return &cmd
+
+	cmd.Flags().StringVarP(&id, "id", "i", "", "Trained model ID")
+	_ = cmd.MarkFlagRequired("id")
+
+	return cmd
 }
 
-func trainedModelListCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:  "list",
-		Usage: "get trained models",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "data-loc",
-				Aliases: []string{"dl"},
-				Usage:   "Data loc",
-			},
-			&cli.StringFlag{
-				Name:    "data-loc-project",
-				Aliases: []string{"dlp"},
-				Usage:   "Data loc project",
-			},
-			&cli.StringFlag{
-				Name:    "id",
-				Aliases: []string{"i"},
-				Usage:   "Prameter tuning job ID",
-			},
-			&cli.StringFlag{
-				Name:    "page",
-				Aliases: []string{"p"},
-				Usage:   "Page",
-			},
-			&cli.StringFlag{
-				Name:    "page-size",
-				Aliases: []string{"ps"},
-				Usage:   "Page size",
-			},
-		},
-		Action: func(c *cli.Context) error {
-			config, err := cfg.LoadRecotemConfig()
+func newTrainedModelDownloadCmd() *cobra.Command {
+	var id, output string
+
+	cmd := &cobra.Command{
+		Use:   "download",
+		Short: "Download trained model file",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
 			if err != nil {
 				return err
 			}
-			client := api.NewClient(c.Context, config)
-			tmList, err := client.GetTrainedModels(
-				utils.NilOrInt(c.String("data-loc")),
-				utils.NilOrInt(c.String("data-loc-project")),
-				utils.NilOrInt(c.String("id")),
-				utils.NilOrInt(c.String("page")),
-				utils.NilOrInt(c.String("page-size")),
-			)
+			idInt, err := strconv.Atoi(id)
 			if err != nil {
 				return err
 			}
-			for _, x := range *tmList.Results {
-				printTrainedModel(x)
+			err = client.DownloadTrainedModel(idInt, output)
+			if err != nil {
+				return err
 			}
+			fmt.Println(output)
 			return nil
 		},
 	}
-	return &cmd
+
+	cmd.Flags().StringVarP(&id, "id", "i", "", "Trained model ID")
+	cmd.Flags().StringVarP(&output, "output", "O", "", "Output filename")
+	_ = cmd.MarkFlagRequired("id")
+	_ = cmd.MarkFlagRequired("output")
+
+	return cmd
 }
 
-func trainedModelDownloadCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:  "download",
-		Usage: "download trained model",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:     "id",
-				Aliases:  []string{"d"},
-				Usage:    "Trained model ID",
-				Required: true,
-			},
-			&cli.StringFlag{
-				Name:     "output",
-				Aliases:  []string{"o"},
-				Usage:    "Output filename",
-				Required: true,
-			},
-		},
-		Action: func(c *cli.Context) error {
-			config, err := cfg.LoadRecotemConfig()
+func newTrainedModelRecommendCmd() *cobra.Command {
+	var id, userID string
+	var nItems int
+
+	cmd := &cobra.Command{
+		Use:   "recommend",
+		Short: "Get recommendations for a user",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
 			if err != nil {
 				return err
 			}
-			client := api.NewClient(c.Context, config)
-			id, err := strconv.Atoi(c.String("id"))
+			idInt, err := strconv.Atoi(id)
 			if err != nil {
 				return err
 			}
-			outputFilename := c.String("output")
-			err = client.DownloadTrainedModel(id, outputFilename)
+			result, err := client.Recommend(idInt, userID, nItems)
 			if err != nil {
 				return err
 			}
-			fmt.Println(outputFilename)
+			utils.PrintOutput(getOutputFormat(), result)
 			return nil
 		},
 	}
-	return &cmd
+
+	cmd.Flags().StringVarP(&id, "id", "i", "", "Trained model ID")
+	cmd.Flags().StringVar(&userID, "user-id", "", "User ID")
+	cmd.Flags().IntVarP(&nItems, "n-items", "n", 10, "Number of items to recommend")
+	_ = cmd.MarkFlagRequired("id")
+	_ = cmd.MarkFlagRequired("user-id")
+
+	return cmd
+}
+
+func newTrainedModelSampleRecommendCmd() *cobra.Command {
+	var id string
+
+	cmd := &cobra.Command{
+		Use:   "sample-recommend",
+		Short: "Get sample recommendations",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
+			if err != nil {
+				return err
+			}
+			idInt, err := strconv.Atoi(id)
+			if err != nil {
+				return err
+			}
+			result, err := client.SampleRecommend(idInt)
+			if err != nil {
+				return err
+			}
+			utils.PrintOutput(getOutputFormat(), result)
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&id, "id", "i", "", "Trained model ID")
+	_ = cmd.MarkFlagRequired("id")
+
+	return cmd
+}
+
+func newTrainedModelRecommendProfileCmd() *cobra.Command {
+	var id string
+	var itemIDs []string
+	var nItems int
+
+	cmd := &cobra.Command{
+		Use:   "recommend-profile",
+		Short: "Get recommendations based on item profile",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
+			if err != nil {
+				return err
+			}
+			idInt, err := strconv.Atoi(id)
+			if err != nil {
+				return err
+			}
+			result, err := client.RecommendProfile(idInt, itemIDs, nItems)
+			if err != nil {
+				return err
+			}
+			utils.PrintOutput(getOutputFormat(), result)
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&id, "id", "i", "", "Trained model ID")
+	cmd.Flags().StringSliceVar(&itemIDs, "item-ids", nil, "Item IDs (comma-separated)")
+	cmd.Flags().IntVarP(&nItems, "n-items", "n", 10, "Number of items to recommend")
+	_ = cmd.MarkFlagRequired("id")
+	_ = cmd.MarkFlagRequired("item-ids")
+
+	return cmd
 }
 
 func printTrainedModel(x openapi.TrainedModel) {
-	size := len(x.TaskLinks)
-	if size > 0 {
-		task := x.TaskLinks[size-1].Task
+	if x.TaskLinks != nil && len(*x.TaskLinks) > 0 {
+		task := (*x.TaskLinks)[len(*x.TaskLinks)-1].Task
 		var status string
 		if task.Status != nil {
 			status = string(*task.Status)
