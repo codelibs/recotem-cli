@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"recotem.org/cli/recotem/pkg/utils"
 )
@@ -37,7 +40,16 @@ func newTaskLogListCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			utils.PrintOutput(getOutputFormat(), string(result))
+			format := getOutputFormat()
+			if format == "json" || format == "yaml" {
+				var data any
+				if err := json.Unmarshal(result, &data); err != nil {
+					return fmt.Errorf("failed to parse response: %w", err)
+				}
+				utils.PrintOutput(format, data)
+			} else {
+				fmt.Println(string(result))
+			}
 			return nil
 		},
 	}

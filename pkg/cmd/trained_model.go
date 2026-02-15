@@ -49,8 +49,13 @@ func newTrainedModelListCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			for _, x := range *tmList.Results {
-				printTrainedModel(x)
+			format := getOutputFormat()
+			if format == "json" || format == "yaml" {
+				utils.PrintOutput(format, tmList)
+			} else {
+				for _, x := range *tmList.Results {
+					printTrainedModel(x)
+				}
 			}
 			return nil
 		},
@@ -91,7 +96,12 @@ func newTrainedModelCreateCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			printTrainedModel(*trainedModel)
+			format := getOutputFormat()
+			if format == "json" || format == "yaml" {
+				utils.PrintOutput(format, trainedModel)
+			} else {
+				printTrainedModel(*trainedModel)
+			}
 			return nil
 		},
 	}
@@ -125,7 +135,12 @@ func newTrainedModelDeleteCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println(idInt)
+			format := getOutputFormat()
+			if format == "json" || format == "yaml" {
+				utils.PrintOutput(format, map[string]any{"id": idInt, "deleted": true})
+			} else {
+				fmt.Println(idInt)
+			}
 			return nil
 		},
 	}
