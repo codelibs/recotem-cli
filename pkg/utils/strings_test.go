@@ -86,7 +86,7 @@ func TestFormatTime(t *testing.T) {
 	testTime := time.Date(2023, 11, 15, 10, 30, 45, 0, time.UTC)
 	expected := "2023-11-15T10:30:45Z"
 
-	result := FormatTime(testTime)
+	result := FormatTime(&testTime)
 	if result != expected {
 		t.Errorf("expected %v, got %v", expected, result)
 	}

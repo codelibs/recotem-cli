@@ -74,3 +74,21 @@ func (c Client) GetProjects(id *int, name *string) (*[]openapi.Project, error) {
 
 	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
+
+func (c Client) GetProjectSummary(id int) ([]byte, error) {
+	client, err := c.newApiClient()
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.ProjectSummaryWithResponse(c.Context, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode() >= 200 && resp.StatusCode() < 300 {
+		return resp.Body, nil
+	}
+
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
+}

@@ -74,3 +74,27 @@ func (c Client) GetEvaluationConfigs(id *int, name *string,
 
 	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
+
+func (c Client) UpdateEvaluationConfig(id int, name *string, cutoff *int,
+	targetMetric *openapi.TargetMetricEnum) (*openapi.EvaluationConfig, error) {
+	client, err := c.newApiClient()
+	if err != nil {
+		return nil, err
+	}
+
+	req := openapi.EvaluationConfigUpdateJSONRequestBody{
+		Name:         name,
+		Cutoff:       cutoff,
+		TargetMetric: targetMetric,
+	}
+	resp, err := client.EvaluationConfigUpdateWithResponse(c.Context, id, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.JSON200 != nil {
+		return resp.JSON200, nil
+	}
+
+	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
+}

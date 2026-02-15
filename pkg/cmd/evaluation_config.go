@@ -1,164 +1,157 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 
-	"github.com/urfave/cli/v2"
-	"recotem.org/cli/recotem/pkg/api"
-	"recotem.org/cli/recotem/pkg/cfg"
+	"github.com/spf13/cobra"
 	"recotem.org/cli/recotem/pkg/openapi"
 	"recotem.org/cli/recotem/pkg/utils"
 )
 
-func EvaluationConfigCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:    "evaluation-config",
+func newEvaluationConfigCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "evaluation-config",
 		Aliases: []string{"ec"},
-		Usage:   "options for evaluation config",
-		Subcommands: []*cli.Command{
-			evaluationConfigCreateCommand(),
-			evaluationConfigDeleteCommand(),
-			evaluationConfigListCommand(),
-		},
+		Short:   "Manage evaluation configs",
 	}
-	return &cmd
+
+	cmd.AddCommand(
+		newEvaluationConfigListCmd(),
+		newEvaluationConfigCreateCmd(),
+		newEvaluationConfigDeleteCmd(),
+		newEvaluationConfigUpdateCmd(),
+	)
+
+	return cmd
 }
 
-func evaluationConfigCreateCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:  "create",
-		Usage: "create a new evaluation config",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "name",
-				Aliases: []string{"n"},
-				Usage:   "Name",
-			},
-			&cli.StringFlag{
-				Name:    "cutoff",
-				Aliases: []string{"c"},
-				Usage:   "Cutoff",
-			},
-			&cli.StringFlag{
-				Name:    "target-metric",
-				Aliases: []string{"tm"},
-				Usage:   "Target metric (ndcg|map|recall|hit)",
-			},
-			&cli.StringFlag{
-				Name:        "format",
-				Aliases:     []string{"fmt"},
-				Usage:       "Output format",
-				DefaultText: "line",
-			},
-		},
-		Action: func(c *cli.Context) error {
-			config, err := cfg.LoadRecotemConfig()
-			if err != nil {
-				return err
-			}
-			client := api.NewClient(c.Context, config)
-			evaluationConfig, err := client.CreateEvaluationConfig(
-				utils.NilOrString(c.String("name")),
-				utils.NilOrInt(c.String("cutoff")),
-				utils.NilOrTargetMetric(c.String("target-metric")))
-			if err != nil {
-				return err
-			}
-			printEvaluationConfig(c.String("format"), *evaluationConfig)
-			return nil
-		},
-	}
-	return &cmd
-}
+func newEvaluationConfigListCmd() *cobra.Command {
+	var id, name, unnamed string
 
-func evaluationConfigDeleteCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:  "delete",
-		Usage: "delete the evaluation config",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:     "id",
-				Aliases:  []string{"i"},
-				Usage:    "Evaluation config ID",
-				Required: true,
-			},
-			&cli.StringFlag{
-				Name:        "format",
-				Aliases:     []string{"fmt"},
-				Usage:       "Output format",
-				DefaultText: "line",
-			},
-		},
-		Action: func(c *cli.Context) error {
-			config, err := cfg.LoadRecotemConfig()
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "List evaluation configs",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
 			if err != nil {
 				return err
 			}
-			client := api.NewClient(c.Context, config)
-			id, err := strconv.Atoi(c.String("id"))
+			configs, err := client.GetEvaluationConfigs(
+				utils.NilOrInt(id),
+				utils.NilOrString(name),
+				utils.NilOrBool(unnamed))
 			if err != nil {
 				return err
 			}
-			err = client.DeleteEvaluationConfig(id)
-			if err != nil {
-				return err
-			}
-			utils.PrintId(c.String("format"), id)
-			return nil
-		},
-	}
-	return &cmd
-}
-
-func evaluationConfigListCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:  "list",
-		Usage: "get evaluation configs",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "id",
-				Aliases: []string{"i"},
-				Usage:   "Evaluation config ID",
-			},
-			&cli.StringFlag{
-				Name:    "name",
-				Aliases: []string{"n"},
-				Usage:   "Name",
-			},
-			&cli.StringFlag{
-				Name:    "unnamed",
-				Aliases: []string{"u"},
-				Usage:   "Unnamed",
-			},
-			&cli.StringFlag{
-				Name:        "format",
-				Aliases:     []string{"fmt"},
-				Usage:       "Output format",
-				DefaultText: "line",
-			},
-		},
-		Action: func(c *cli.Context) error {
-			config, err := cfg.LoadRecotemConfig()
-			if err != nil {
-				return err
-			}
-			client := api.NewClient(c.Context, config)
-			evaluationConfigs, err := client.GetEvaluationConfigs(
-				utils.NilOrInt(c.String("id")),
-				utils.NilOrString(c.String("name")),
-				utils.NilOrBool(c.String("unnamed")))
-			if err != nil {
-				return err
-			}
-			for _, x := range *evaluationConfigs {
-				printEvaluationConfig(c.String("format"), x)
+			for _, x := range *configs {
+				printEvaluationConfig(getOutputFormat(), x)
 			}
 			return nil
 		},
 	}
-	return &cmd
+
+	cmd.Flags().StringVarP(&id, "id", "i", "", "Evaluation config ID")
+	cmd.Flags().StringVarP(&name, "name", "n", "", "Name")
+	cmd.Flags().StringVarP(&unnamed, "unnamed", "u", "", "Unnamed")
+
+	return cmd
+}
+
+func newEvaluationConfigCreateCmd() *cobra.Command {
+	var name, cutoff, targetMetric string
+
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "Create an evaluation config",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
+			if err != nil {
+				return err
+			}
+			ec, err := client.CreateEvaluationConfig(
+				utils.NilOrString(name),
+				utils.NilOrInt(cutoff),
+				utils.NilOrTargetMetric(targetMetric))
+			if err != nil {
+				return err
+			}
+			printEvaluationConfig(getOutputFormat(), *ec)
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&name, "name", "n", "", "Name")
+	cmd.Flags().StringVarP(&cutoff, "cutoff", "c", "", "Cutoff")
+	cmd.Flags().StringVar(&targetMetric, "target-metric", "", "Target metric (ndcg|map|recall|hit)")
+
+	return cmd
+}
+
+func newEvaluationConfigDeleteCmd() *cobra.Command {
+	var id string
+
+	cmd := &cobra.Command{
+		Use:   "delete",
+		Short: "Delete an evaluation config",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
+			if err != nil {
+				return err
+			}
+			idInt, err := strconv.Atoi(id)
+			if err != nil {
+				return err
+			}
+			err = client.DeleteEvaluationConfig(idInt)
+			if err != nil {
+				return err
+			}
+			utils.PrintId(getOutputFormat(), idInt)
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&id, "id", "i", "", "Evaluation config ID")
+	_ = cmd.MarkFlagRequired("id")
+
+	return cmd
+}
+
+func newEvaluationConfigUpdateCmd() *cobra.Command {
+	var id, name, cutoff, targetMetric string
+
+	cmd := &cobra.Command{
+		Use:   "update",
+		Short: "Update an evaluation config",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
+			if err != nil {
+				return err
+			}
+			idInt, err := strconv.Atoi(id)
+			if err != nil {
+				return err
+			}
+			ec, err := client.UpdateEvaluationConfig(idInt,
+				utils.NilOrString(name),
+				utils.NilOrInt(cutoff),
+				utils.NilOrTargetMetric(targetMetric))
+			if err != nil {
+				return err
+			}
+			printEvaluationConfig(getOutputFormat(), *ec)
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&id, "id", "i", "", "Evaluation config ID")
+	cmd.Flags().StringVarP(&name, "name", "n", "", "Name")
+	cmd.Flags().StringVarP(&cutoff, "cutoff", "c", "", "Cutoff")
+	cmd.Flags().StringVar(&targetMetric, "target-metric", "", "Target metric (ndcg|map|recall|hit)")
+	_ = cmd.MarkFlagRequired("id")
+
+	return cmd
 }
 
 func printEvaluationConfig(format string, x openapi.EvaluationConfig) {
@@ -168,18 +161,14 @@ func printEvaluationConfig(format string, x openapi.EvaluationConfig) {
 	} else {
 		targetMetric = utils.NoValue
 	}
-	if format == "json" {
-		body := map[string]string{
-			"id":            strconv.Itoa(x.Id),
+	if format == "json" || format == "yaml" {
+		m := map[string]any{
+			"id":            x.Id,
 			"cutoff":        utils.Itoa(x.Cutoff),
 			"target_metric": targetMetric,
-			"name":          utils.Atoa(x.Name)}
-		bytes, err := json.Marshal(body)
-		if err != nil {
-			fmt.Println("JSON marshal error: ", err)
-			return
+			"name":          utils.Atoa(x.Name),
 		}
-		fmt.Println(string(bytes))
+		utils.PrintOutput(format, m)
 	} else {
 		fmt.Println(
 			x.Id,

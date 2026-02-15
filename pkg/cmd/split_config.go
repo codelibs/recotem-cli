@@ -4,166 +4,170 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/urfave/cli/v2"
-	"recotem.org/cli/recotem/pkg/api"
-	"recotem.org/cli/recotem/pkg/cfg"
+	"github.com/spf13/cobra"
 	"recotem.org/cli/recotem/pkg/openapi"
 	"recotem.org/cli/recotem/pkg/utils"
 )
 
-func SplitConfigCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:    "split-config",
+func newSplitConfigCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "split-config",
 		Aliases: []string{"sc"},
-		Usage:   "options for split config",
-		Subcommands: []*cli.Command{
-			splitConfigCreateCommand(),
-			splitConfigDeleteCommand(),
-			splitConfigListCommand(),
-		},
+		Short:   "Manage split configs",
 	}
-	return &cmd
+
+	cmd.AddCommand(
+		newSplitConfigListCmd(),
+		newSplitConfigCreateCmd(),
+		newSplitConfigDeleteCmd(),
+		newSplitConfigUpdateCmd(),
+	)
+
+	return cmd
 }
 
-func splitConfigCreateCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:  "create",
-		Usage: "create a new split config",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "name",
-				Aliases: []string{"n"},
-				Usage:   "Name",
-			},
-			&cli.StringFlag{
-				Name:    "scheme",
-				Aliases: []string{"s"},
-				Usage:   "Scheme (RG|TG|TU)",
-			},
-			&cli.StringFlag{
-				Name:    "heldout-ratio",
-				Aliases: []string{"hr"},
-				Usage:   "Heldout ratio",
-			},
-			&cli.StringFlag{
-				Name:    "n-heldout",
-				Aliases: []string{"nh"},
-				Usage:   "The number of heldout",
-			},
-			&cli.StringFlag{
-				Name:    "test-user-ratio",
-				Aliases: []string{"tur"},
-				Usage:   "Test user ratio",
-			},
-			&cli.StringFlag{
-				Name:    "n-test-users",
-				Aliases: []string{"ntu"},
-				Usage:   "The number of test users",
-			},
-			&cli.StringFlag{
-				Name:    "random-seed",
-				Aliases: []string{"rs"},
-				Usage:   "Random seed",
-			},
-		},
-		Action: func(c *cli.Context) error {
-			config, err := cfg.LoadRecotemConfig()
-			if err != nil {
-				return err
-			}
-			client := api.NewClient(c.Context, config)
-			splitConfig, err := client.CreateSplitConfig(
-				utils.NilOrString(c.String("name")),
-				utils.NilOrScheme(c.String("scheme")),
-				utils.NilOrFloat32(c.String("heldout-ratio")),
-				utils.NilOrInt(c.String("n-heldout")),
-				utils.NilOrFloat32(c.String("test-user-ratio")),
-				utils.NilOrInt(c.String("n-test-users")),
-				utils.NilOrInt(c.String("random-seed")))
-			if err != nil {
-				return err
-			}
-			printSplitConfig(*splitConfig)
-			return nil
-		},
-	}
-	return &cmd
-}
+func newSplitConfigListCmd() *cobra.Command {
+	var id, name, unnamed string
 
-func splitConfigDeleteCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:  "delete",
-		Usage: "delete the split config",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:     "id",
-				Aliases:  []string{"i"},
-				Usage:    "Split config ID",
-				Required: true,
-			},
-		},
-		Action: func(c *cli.Context) error {
-			config, err := cfg.LoadRecotemConfig()
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "List split configs",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
 			if err != nil {
 				return err
 			}
-			client := api.NewClient(c.Context, config)
-			id, err := strconv.Atoi(c.String("id"))
+			configs, err := client.GetSplitConfigs(
+				utils.NilOrInt(id),
+				utils.NilOrString(name),
+				utils.NilOrBool(unnamed))
 			if err != nil {
 				return err
 			}
-			err = client.DeleteSplitConfig(id)
-			if err != nil {
-				return err
-			}
-			fmt.Println(id)
-			return nil
-		},
-	}
-	return &cmd
-}
-
-func splitConfigListCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:  "list",
-		Usage: "get split configs",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "id",
-				Aliases: []string{"i"},
-				Usage:   "Split config ID",
-			},
-			&cli.StringFlag{
-				Name:    "name",
-				Aliases: []string{"n"},
-				Usage:   "Name",
-			},
-			&cli.StringFlag{
-				Name:    "unnamed",
-				Aliases: []string{"u"},
-				Usage:   "Unnamed",
-			},
-		},
-		Action: func(c *cli.Context) error {
-			config, err := cfg.LoadRecotemConfig()
-			if err != nil {
-				return err
-			}
-			client := api.NewClient(c.Context, config)
-			splitConfigs, err := client.GetSplitConfigs(
-				utils.NilOrInt(c.String("id")),
-				utils.NilOrString(c.String("name")),
-				utils.NilOrBool(c.String("unnamed")))
-			if err != nil {
-				return err
-			}
-			for _, x := range *splitConfigs {
+			for _, x := range *configs {
 				printSplitConfig(x)
 			}
 			return nil
 		},
 	}
-	return &cmd
+
+	cmd.Flags().StringVarP(&id, "id", "i", "", "Split config ID")
+	cmd.Flags().StringVarP(&name, "name", "n", "", "Name")
+	cmd.Flags().StringVarP(&unnamed, "unnamed", "u", "", "Unnamed")
+
+	return cmd
+}
+
+func newSplitConfigCreateCmd() *cobra.Command {
+	var name, scheme, heldoutRatio, nHeldout, testUserRatio, nTestUsers, randomSeed string
+
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "Create a split config",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
+			if err != nil {
+				return err
+			}
+			sc, err := client.CreateSplitConfig(
+				utils.NilOrString(name),
+				utils.NilOrScheme(scheme),
+				utils.NilOrFloat32(heldoutRatio),
+				utils.NilOrInt(nHeldout),
+				utils.NilOrFloat32(testUserRatio),
+				utils.NilOrInt(nTestUsers),
+				utils.NilOrInt(randomSeed))
+			if err != nil {
+				return err
+			}
+			printSplitConfig(*sc)
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&name, "name", "n", "", "Name")
+	cmd.Flags().StringVarP(&scheme, "scheme", "s", "", "Scheme (RG|TG|TU)")
+	cmd.Flags().StringVar(&heldoutRatio, "heldout-ratio", "", "Heldout ratio")
+	cmd.Flags().StringVar(&nHeldout, "n-heldout", "", "Number of heldout")
+	cmd.Flags().StringVar(&testUserRatio, "test-user-ratio", "", "Test user ratio")
+	cmd.Flags().StringVar(&nTestUsers, "n-test-users", "", "Number of test users")
+	cmd.Flags().StringVar(&randomSeed, "random-seed", "", "Random seed")
+
+	return cmd
+}
+
+func newSplitConfigDeleteCmd() *cobra.Command {
+	var id string
+
+	cmd := &cobra.Command{
+		Use:   "delete",
+		Short: "Delete a split config",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
+			if err != nil {
+				return err
+			}
+			idInt, err := strconv.Atoi(id)
+			if err != nil {
+				return err
+			}
+			err = client.DeleteSplitConfig(idInt)
+			if err != nil {
+				return err
+			}
+			fmt.Println(idInt)
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&id, "id", "i", "", "Split config ID")
+	_ = cmd.MarkFlagRequired("id")
+
+	return cmd
+}
+
+func newSplitConfigUpdateCmd() *cobra.Command {
+	var id, name, scheme, heldoutRatio, nHeldout, testUserRatio, nTestUsers, randomSeed string
+
+	cmd := &cobra.Command{
+		Use:   "update",
+		Short: "Update a split config",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
+			if err != nil {
+				return err
+			}
+			idInt, err := strconv.Atoi(id)
+			if err != nil {
+				return err
+			}
+			sc, err := client.UpdateSplitConfig(idInt,
+				utils.NilOrString(name),
+				utils.NilOrScheme(scheme),
+				utils.NilOrFloat32(heldoutRatio),
+				utils.NilOrInt(nHeldout),
+				utils.NilOrFloat32(testUserRatio),
+				utils.NilOrInt(nTestUsers),
+				utils.NilOrInt(randomSeed))
+			if err != nil {
+				return err
+			}
+			printSplitConfig(*sc)
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&id, "id", "i", "", "Split config ID")
+	cmd.Flags().StringVarP(&name, "name", "n", "", "Name")
+	cmd.Flags().StringVarP(&scheme, "scheme", "s", "", "Scheme (RG|TG|TU)")
+	cmd.Flags().StringVar(&heldoutRatio, "heldout-ratio", "", "Heldout ratio")
+	cmd.Flags().StringVar(&nHeldout, "n-heldout", "", "Number of heldout")
+	cmd.Flags().StringVar(&testUserRatio, "test-user-ratio", "", "Test user ratio")
+	cmd.Flags().StringVar(&nTestUsers, "n-test-users", "", "Number of test users")
+	cmd.Flags().StringVar(&randomSeed, "random-seed", "", "Random seed")
+	_ = cmd.MarkFlagRequired("id")
+
+	return cmd
 }
 
 func printSplitConfig(x openapi.SplitConfig) {

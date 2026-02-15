@@ -4,161 +4,162 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/urfave/cli/v2"
-	"recotem.org/cli/recotem/pkg/api"
-	"recotem.org/cli/recotem/pkg/cfg"
+	"github.com/spf13/cobra"
 	"recotem.org/cli/recotem/pkg/openapi"
 	"recotem.org/cli/recotem/pkg/utils"
 )
 
-func ModelConfigurationCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:    "model-configuration",
+func newModelConfigurationCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "model-configuration",
 		Aliases: []string{"mc"},
-		Usage:   "options for model configuration",
-		Subcommands: []*cli.Command{
-			modelConfigurationCreateCommand(),
-			modelConfigurationDeleteCommand(),
-			modelConfigurationListCommand(),
-		},
+		Short:   "Manage model configurations",
 	}
-	return &cmd
+
+	cmd.AddCommand(
+		newModelConfigurationListCmd(),
+		newModelConfigurationCreateCmd(),
+		newModelConfigurationDeleteCmd(),
+		newModelConfigurationUpdateCmd(),
+	)
+
+	return cmd
 }
 
-func modelConfigurationCreateCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:  "create",
-		Usage: "create a new model configuration",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "name",
-				Aliases: []string{"n"},
-				Usage:   "Name",
-			},
-			&cli.StringFlag{
-				Name:     "project",
-				Aliases:  []string{"p"},
-				Usage:    "Project",
-				Required: true,
-			},
-			&cli.StringFlag{
-				Name:     "recommender-class-name",
-				Aliases:  []string{"rcn"},
-				Usage:    "Recommender class name",
-				Required: true,
-			},
-			&cli.StringFlag{
-				Name:     "parameters-json",
-				Aliases:  []string{"pj"},
-				Usage:    "Parameters json",
-				Required: true,
-			},
-		},
-		Action: func(c *cli.Context) error {
-			config, err := cfg.LoadRecotemConfig()
-			if err != nil {
-				return err
-			}
-			client := api.NewClient(c.Context, config)
-			project, err := strconv.Atoi(c.String("project"))
-			if err != nil {
-				return err
-			}
-			modelConfiguration, err := client.CreateModelConfiguration(
-				utils.NilOrString(c.String("name")),
-				project,
-				c.String("recommender-class-name"),
-				c.String("parameters-json"))
-			if err != nil {
-				return err
-			}
-			printModelConfiguration(*modelConfiguration)
-			return nil
-		},
-	}
-	return &cmd
-}
+func newModelConfigurationListCmd() *cobra.Command {
+	var id, page, pageSize, project string
 
-func modelConfigurationDeleteCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:  "delete",
-		Usage: "delete the model configuration",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:     "id",
-				Aliases:  []string{"i"},
-				Usage:    "Model configuration ID",
-				Required: true,
-			},
-		},
-		Action: func(c *cli.Context) error {
-			config, err := cfg.LoadRecotemConfig()
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "List model configurations",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
 			if err != nil {
 				return err
 			}
-			client := api.NewClient(c.Context, config)
-			id, err := strconv.Atoi(c.String("id"))
+			modelConfigs, err := client.GetModelConfigurations(
+				utils.NilOrInt(id),
+				utils.NilOrInt(page),
+				utils.NilOrInt(pageSize),
+				utils.NilOrInt(project))
 			if err != nil {
 				return err
 			}
-			err = client.DeleteModelConfiguration(id)
-			if err != nil {
-				return err
-			}
-			fmt.Println(id)
-			return nil
-		},
-	}
-	return &cmd
-}
-
-func modelConfigurationListCommand() *cli.Command {
-	cmd := cli.Command{
-		Name:  "list",
-		Usage: "get model configurations",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "id",
-				Aliases: []string{"i"},
-				Usage:   "Model configuration ID",
-			},
-			&cli.StringFlag{
-				Name:    "page",
-				Aliases: []string{"p"},
-				Usage:   "Page",
-			},
-			&cli.StringFlag{
-				Name:    "page-size",
-				Aliases: []string{"ps"},
-				Usage:   "Page size",
-			},
-			&cli.StringFlag{
-				Name:    "project",
-				Aliases: []string{"pj"},
-				Usage:   "Project",
-			},
-		},
-		Action: func(c *cli.Context) error {
-			config, err := cfg.LoadRecotemConfig()
-			if err != nil {
-				return err
-			}
-			client := api.NewClient(c.Context, config)
-			modelConfigurations, err := client.GetModelConfigurations(
-				utils.NilOrInt(c.String("id")),
-				utils.NilOrInt(c.String("page")),
-				utils.NilOrInt(c.String("page-size")),
-				utils.NilOrInt(c.String("project")))
-			if err != nil {
-				return err
-			}
-			for _, x := range *modelConfigurations.Results {
+			for _, x := range *modelConfigs.Results {
 				printModelConfiguration(x)
 			}
 			return nil
 		},
 	}
-	return &cmd
+
+	cmd.Flags().StringVarP(&id, "id", "i", "", "Model configuration ID")
+	cmd.Flags().StringVarP(&page, "page", "p", "", "Page")
+	cmd.Flags().StringVar(&pageSize, "page-size", "", "Page size")
+	cmd.Flags().StringVar(&project, "project", "", "Project ID")
+
+	return cmd
+}
+
+func newModelConfigurationCreateCmd() *cobra.Command {
+	var name, project, recommenderClassName, parametersJSON string
+
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "Create a model configuration",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
+			if err != nil {
+				return err
+			}
+			projectID, err := strconv.Atoi(project)
+			if err != nil {
+				return err
+			}
+			mc, err := client.CreateModelConfiguration(
+				utils.NilOrString(name), projectID,
+				recommenderClassName, parametersJSON)
+			if err != nil {
+				return err
+			}
+			printModelConfiguration(*mc)
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&name, "name", "n", "", "Name")
+	cmd.Flags().StringVarP(&project, "project", "p", "", "Project ID")
+	cmd.Flags().StringVar(&recommenderClassName, "recommender-class-name", "", "Recommender class name")
+	cmd.Flags().StringVar(&parametersJSON, "parameters-json", "", "Parameters JSON")
+	_ = cmd.MarkFlagRequired("project")
+	_ = cmd.MarkFlagRequired("recommender-class-name")
+	_ = cmd.MarkFlagRequired("parameters-json")
+
+	return cmd
+}
+
+func newModelConfigurationDeleteCmd() *cobra.Command {
+	var id string
+
+	cmd := &cobra.Command{
+		Use:   "delete",
+		Short: "Delete a model configuration",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
+			if err != nil {
+				return err
+			}
+			idInt, err := strconv.Atoi(id)
+			if err != nil {
+				return err
+			}
+			err = client.DeleteModelConfiguration(idInt)
+			if err != nil {
+				return err
+			}
+			fmt.Println(idInt)
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&id, "id", "i", "", "Model configuration ID")
+	_ = cmd.MarkFlagRequired("id")
+
+	return cmd
+}
+
+func newModelConfigurationUpdateCmd() *cobra.Command {
+	var id, name, recommenderClassName, parametersJSON string
+
+	cmd := &cobra.Command{
+		Use:   "update",
+		Short: "Update a model configuration",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := newClientFromCmd(cmd)
+			if err != nil {
+				return err
+			}
+			idInt, err := strconv.Atoi(id)
+			if err != nil {
+				return err
+			}
+			mc, err := client.UpdateModelConfiguration(idInt,
+				utils.NilOrString(name),
+				utils.NilOrString(parametersJSON))
+			if err != nil {
+				return err
+			}
+			printModelConfiguration(*mc)
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&id, "id", "i", "", "Model configuration ID")
+	cmd.Flags().StringVarP(&name, "name", "n", "", "Name")
+	cmd.Flags().StringVar(&recommenderClassName, "recommender-class-name", "", "Recommender class name")
+	cmd.Flags().StringVar(&parametersJSON, "parameters-json", "", "Parameters JSON")
+	_ = cmd.MarkFlagRequired("id")
+
+	return cmd
 }
 
 func printModelConfiguration(x openapi.ModelConfiguration) {

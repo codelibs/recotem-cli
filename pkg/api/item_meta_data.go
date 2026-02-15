@@ -102,3 +102,21 @@ func (c Client) GetItemMetaData(id *int, page *int, pageSize *int, project *int)
 
 	return nil, fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
 }
+
+func (c Client) DownloadItemMetaData(id int, output string) error {
+	client, err := c.newApiClient()
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.ItemMetaDataDownloadWithResponse(c.Context, id)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode() != 200 {
+		return fmt.Errorf("%s: %s", resp.Status(), string(resp.Body))
+	}
+
+	return os.WriteFile(output, resp.Body, 0600)
+}

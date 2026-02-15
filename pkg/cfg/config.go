@@ -2,8 +2,9 @@ package cfg
 
 import (
 	"os"
+	"time"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -11,17 +12,19 @@ const (
 )
 
 type RecotemConfig struct {
-	Url   string
-	Token string
+	Url          string     `yaml:"url"`
+	Token        string     `yaml:"token,omitempty"`
+	AccessToken  string     `yaml:"access_token,omitempty"`
+	RefreshToken string     `yaml:"refresh_token,omitempty"`
+	ExpiresAt    *time.Time `yaml:"expires_at,omitempty"`
+	ApiKey       string     `yaml:"api_key,omitempty"`
 }
 
-func NewRectemConfig(url string) (c RecotemConfig) {
-	c = RecotemConfig{}
-	c.Url = url
-	return
+func NewRecotemConfig(url string) RecotemConfig {
+	return RecotemConfig{Url: url}
 }
 
-func NewRectemConfigFromFile(filename string) (RecotemConfig, error) {
+func NewRecotemConfigFromFile(filename string) (RecotemConfig, error) {
 	buf, err := os.ReadFile(filename)
 	if err != nil {
 		return RecotemConfig{}, err
@@ -42,4 +45,20 @@ func configPath() (string, error) {
 		return "", err
 	}
 	return home + string(os.PathSeparator) + configFilename, nil
+}
+
+// ClearTokens removes all authentication tokens from the config
+func (c *RecotemConfig) ClearTokens() {
+	c.Token = ""
+	c.AccessToken = ""
+	c.RefreshToken = ""
+	c.ExpiresAt = nil
+}
+
+// IsTokenExpired checks if the access token is expired or will expire within 30 seconds
+func (c *RecotemConfig) IsTokenExpired() bool {
+	if c.ExpiresAt == nil {
+		return true
+	}
+	return time.Now().Add(30 * time.Second).After(*c.ExpiresAt)
 }

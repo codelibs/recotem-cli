@@ -3,8 +3,8 @@ package api
 import (
 	"context"
 	"fmt"
+	"net/http"
 
-	"github.com/deepmap/oapi-codegen/pkg/securityprovider"
 	"recotem.org/cli/recotem/pkg/cfg"
 	"recotem.org/cli/recotem/pkg/openapi"
 )
@@ -14,20 +14,48 @@ type Client struct {
 	Config  cfg.RecotemConfig
 }
 
-func NewClient(context context.Context, config cfg.RecotemConfig) Client {
-	client := Client{
-		Context: context,
+func NewClient(ctx context.Context, config cfg.RecotemConfig) Client {
+	return Client{
+		Context: ctx,
 		Config:  config,
 	}
-	return client
 }
 
+// newApiClient creates an authenticated OpenAPI client.
+// Authentication priority: API key flag > JWT access token > legacy Token
 func (c Client) newApiClient() (*openapi.ClientWithResponses, error) {
-	provider, err := securityprovider.NewSecurityProviderApiKey("header", "Authorization", fmt.Sprintf("Token %s", c.Config.Token))
+	authFn := func(ctx context.Context, req *http.Request) error {
+		// Priority 1: API key
+		if c.Config.ApiKey != "" {
+			req.Header.Set("X-API-Key", c.Config.ApiKey)
+			return nil
+		}
+		// Priority 2: JWT access token
+		if c.Config.AccessToken != "" {
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Config.AccessToken))
+			return nil
+		}
+		// Priority 3: Legacy token
+		if c.Config.Token != "" {
+			req.Header.Set("Authorization", fmt.Sprintf("Token %s", c.Config.Token))
+			return nil
+		}
+		return nil
+	}
+
+	client, err := openapi.NewClientWithResponses(
+		c.Config.Url,
+		openapi.WithRequestEditorFn(authFn),
+	)
 	if err != nil {
 		return nil, err
 	}
-	client, err := openapi.NewClientWithResponses(c.Config.Url, openapi.WithRequestEditorFn(provider.Intercept))
+	return client, nil
+}
+
+// newUnauthenticatedClient creates an OpenAPI client without authentication (for login, ping, etc.)
+func (c Client) newUnauthenticatedClient() (*openapi.ClientWithResponses, error) {
+	client, err := openapi.NewClientWithResponses(c.Config.Url)
 	if err != nil {
 		return nil, err
 	}
