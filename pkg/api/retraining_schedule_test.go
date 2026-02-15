@@ -15,8 +15,8 @@ func TestGetRetrainingSchedulesSuccess(t *testing.T) {
 			t.Errorf("expected GET, got %s", r.Method)
 		}
 		jsonResponse(w, http.StatusOK, map[string]any{
-			"count": 1,
-			"next":  nil,
+			"count":    1,
+			"next":     nil,
 			"previous": nil,
 			"results": []map[string]any{
 				{

@@ -127,8 +127,8 @@ func newConversionEventBatchCreateCmd() *cobra.Command {
 				return fmt.Errorf("failed to read file: %w", err)
 			}
 			var events []openapi.ConversionEventCreate
-			if err := json.Unmarshal(data, &events); err != nil {
-				return fmt.Errorf("failed to parse JSON: %w", err)
+			if unmarshalErr := json.Unmarshal(data, &events); unmarshalErr != nil {
+				return fmt.Errorf("failed to parse JSON: %w", unmarshalErr)
 			}
 			result, err := client.BatchCreateConversionEvents(events)
 			if err != nil {

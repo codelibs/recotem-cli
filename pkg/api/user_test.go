@@ -8,8 +8,8 @@ import (
 func TestGetUsersSuccess(t *testing.T) {
 	server, client := newTestServer(func(w http.ResponseWriter, r *http.Request) {
 		jsonResponse(w, http.StatusOK, map[string]any{
-			"count": 1,
-			"next":  nil,
+			"count":    1,
+			"next":     nil,
 			"previous": nil,
 			"results": []map[string]any{
 				{

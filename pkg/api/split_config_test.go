@@ -10,14 +10,14 @@ import (
 func TestCreateSplitConfigSuccess(t *testing.T) {
 	server, client := newTestServer(func(w http.ResponseWriter, r *http.Request) {
 		jsonResponse(w, http.StatusCreated, map[string]any{
-			"id":             1,
-			"name":           "split1",
-			"scheme":         "RG",
-			"heldout_ratio":  0.2,
-			"n_heldout":      nil,
+			"id":              1,
+			"name":            "split1",
+			"scheme":          "RG",
+			"heldout_ratio":   0.2,
+			"n_heldout":       nil,
 			"test_user_ratio": 0.5,
-			"n_test_users":   nil,
-			"random_seed":    42,
+			"n_test_users":    nil,
+			"random_seed":     42,
 		})
 	})
 	defer server.Close()
