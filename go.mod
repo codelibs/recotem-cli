@@ -2,8 +2,6 @@ module recotem.org/cli/recotem
 
 go 1.24.0
 
-toolchain go1.25.7
-
 require (
 	github.com/getkin/kin-openapi v0.133.0
 	github.com/oapi-codegen/runtime v1.1.1
